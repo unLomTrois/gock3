@@ -131,25 +131,26 @@ func (p *Parser) ScriptNode() *Node {
 func (p *Parser) ExpressionNode() *Node {
 	fmt.Println("[EXPRESSION-NODE]")
 	fmt.Println("--[KEY]")
-	key := p.Literal()
+	lvalue := p.Literal()
 
-	var _type NodeType
-	var _operator *lexer.Token
-	var _opvalue string
+	var nodetype NodeType
+	var operator *lexer.Token
+	var rvalue string
 	fmt.Println("--[OPERATION]")
+
 	switch p.lookahead.Type {
 	case lexer.EQUALS:
-		_operator = p.expect(lexer.EQUALS)
-		if string(_operator.Value) == "==" {
-			_type = Comparison
+		operator = p.expect(lexer.EQUALS)
+		if string(operator.Value) == "==" {
+			nodetype = Comparison
 		} else {
-			_type = Property
+			nodetype = Property
 		}
-		_opvalue = string(_operator.Value)
+		rvalue = string(operator.Value)
 	case lexer.COMPARISON:
-		_operator = p.expect(lexer.COMPARISON)
-		_type = Comparison
-		_opvalue = string(_operator.Value)
+		operator = p.expect(lexer.COMPARISON)
+		nodetype = Comparison
+		rvalue = string(operator.Value)
 	}
 
 	var value interface{}
@@ -159,17 +160,17 @@ func (p *Parser) ExpressionNode() *Node {
 		fmt.Println("--[VALUE]")
 		value = p.Literal()
 		return &Node{
-			Type:     _type,
-			Key:      key,
-			Operator: _opvalue,
+			Type:     nodetype,
+			Key:      lvalue,
+			Operator: rvalue,
 			Data:     value,
 		}
 	case lexer.START:
 		// fmt.Println("--[BLOCK]")
 		node := &Node{
 			Type:     Block,
-			Key:      key,
-			Operator: _opvalue,
+			Key:      lvalue,
+			Operator: rvalue,
 			Data:     nil,
 		}
 

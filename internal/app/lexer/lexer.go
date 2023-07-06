@@ -55,11 +55,11 @@ func (l *Lexer) hasMoreTokens() bool {
 	return l.cursor < len(l.Text)
 }
 
-func (l *Lexer) isEOF() bool {
-	return l.cursor == len(l.Text)
-}
+// func (l *Lexer) isEOF() bool {
+// 	return l.cursor == len(l.Text)
+// }
 
-func (l *Lexer) _match(reg *regexp.Regexp, text []byte) []byte {
+func (l *Lexer) match(reg *regexp.Regexp, text []byte) []byte {
 	if match := reg.Find(text); match != nil {
 		l.cursor += len(match)
 		return match
@@ -78,7 +78,7 @@ func (l *Lexer) GetNextToken() (*Token, error) {
 		// todo: implement less greedy matching
 		// fmt.Println("try:", k, "on: ", string(l._string[0:10]))
 		reg := regexp.MustCompile(k)
-		token_value := l._match(reg, l._string)
+		token_value := l.match(reg, l._string)
 		if token_value == nil {
 			// fmt.Println("continue")
 			continue

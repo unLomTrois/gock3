@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ck3-parser/internal/app/linter"
+	// "ck3-parser/internal/app/linter"
 	"ck3-parser/internal/app/parser"
 	"encoding/json"
 	"log"
@@ -70,17 +70,17 @@ func SaveJSON(data interface{}, filename string) error {
 	return nil
 }
 
-func SaveLintedData(linter *linter.Linter, filepath string) error {
-	file, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+// func SaveLintedData(linter *linter.Linter, filepath string) error {
+// 	file, err := os.Create(filepath)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer file.Close()
 
-	_, err = file.Write(linter.LintedData())
-	if err != nil {
-		return err
-	}
+// 	_, err = file.Write(linter.LintedData())
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
