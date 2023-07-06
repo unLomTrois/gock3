@@ -1,14 +1,16 @@
-# Comment
-namespace = avatar
-character_event = {
-	# INLINE COMMENT
-	id = avatar.100
-	if = {
-		limit = {
-			# KEK
-			kek = lol
-		}
-		lol = yes
-	}
-	desc = avatar.200
-}
+# Comment in file scope
+namespace = fp1_yearly
+# fp1_yearly.2400 = {
+# 	# Comment in event scope
+# 	type = character_event
+# 	title = fp1_yearly.2400.t
+# 	desc = fp1_yearly.2400.desc
+# 	theme = hunt_activity
+# 	left_portrait = {
+# 		character = root
+# 		animation = personality_rational
+# 	}
+# 	override_background = {
+# 		event_background = fp1_runestone
+# 	}
+# }

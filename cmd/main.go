@@ -4,12 +4,13 @@ import (
 	"ck3-parser/internal/app/linter"
 	"ck3-parser/internal/app/parser"
 	"encoding/json"
+	"log"
 	"os"
 )
 
 func main() {
 	// Open file
-	filepath := "data/2_hard.txt"
+	filepath := "data/0_elementary.txt"
 	file, err := os.Open(filepath)
 	if err != nil {
 		panic(err)
@@ -33,15 +34,15 @@ func main() {
 		panic(err)
 	}
 
-	// Lint file
-	linter := linter.NewLinter(p.Filepath, p.Data)
-	linter.Lint()
+	// // Lint file
+	// linter := linter.NewLinter(p.Filepath, p.Data)
+	// linter.Lint()
 
-	lintedFilePath := "tmp/linted.txt"
-	err = SaveLintedData(linter, lintedFilePath)
-	if err != nil {
-		panic(err)
-	}
+	// lintedFilePath := "tmp/linted.txt"
+	// err = SaveLintedData(linter, lintedFilePath)
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 func SaveJSON(data interface{}, filename string) error {
@@ -63,6 +64,8 @@ func SaveJSON(data interface{}, filename string) error {
 	if err := enc.Encode(data); err != nil {
 		return err
 	}
+
+	log.Println("Parsed data saved to tmp/parsed.json")
 
 	return nil
 }
