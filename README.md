@@ -32,3 +32,11 @@ Parser makes AST (Abstract Syntax Tree), catches syntax errors (e.g. not closed 
 ## Linted file:
 
 TODO
+
+## P.S.
+
+If you have zero knowledge in parsing, I recommend watch this playlist first: [Building a Parser from scratch](https://www.youtube.com/playlist?list=PLGNbPb3dQJ_5FTPfFIg28UxuMpu7k0eT4)
+
+Then you can read first 2-3 chapters of [Compilers: Principles, Techniques, and Tools](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)
+
+
