@@ -57,7 +57,7 @@ var TokenCheckOrder = []TokenType{
 
 type Token struct {
 	Type  TokenType `json:"type"`
-	Value []byte    `json:"value"`
+	Value string    `json:"value"`
 }
 
 func (t *Token) String() string {

@@ -89,7 +89,7 @@ func (l *Lexer) GetNextToken() (*Token, error) {
 		}
 		return &Token{
 			Type:  tokentype,
-			Value: match,
+			Value: string(match),
 		}, nil
 	}
 	panic("[Lexer] Unexpected token: " + strconv.Quote(string(l.Text[0])))
