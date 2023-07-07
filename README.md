@@ -12,9 +12,9 @@ Lexer creates stream of tokens that is consumed by parser, catches lexical error
 Parser makes AST (Abstract Syntax Tree), catches syntax errors (e.g. not closed curly brace)
 
 ## Todo
-- [+] Implement Lexer
-- [+] Add tests on Lexer
-- [+] Implement Parser
+- [x] Implement Lexer
+- [x] Add tests on Lexer
+- [x] Implement Parser
 - [ ] Add tests on Parser
 - [ ] Update Linter
 - [ ] Make a VSCode extension
