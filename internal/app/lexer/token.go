@@ -11,30 +11,48 @@ const (
 	COMMENT    TokenType = "COMMENT"
 	SCRIPT     TokenType = "SCRIPT"
 	WORD       TokenType = "WORD"
+	STRING     TokenType = "STRING"
 	NUMBER     TokenType = "NUMBER"
-	NULL       TokenType = "NULL"
-	WHITESPACE TokenType = "WHITESPACE"
+	BOOL       TokenType = "BOOL"
 	NEXTLINE   TokenType = "NEXTLINE"
-	TAB        TokenType = "TAB"
 	EQUALS     TokenType = "EQUALS"
 	START      TokenType = "START"
 	END        TokenType = "END"
+	WHITESPACE TokenType = "WHITESPACE"
+	TAB        TokenType = "TAB"
 	COMPARISON TokenType = "COMPARISON"
 )
 
-var Spec = map[string]TokenType{
-	`^[\<\>]=?`:                  COMPARISON,
-	`^#(.+)?`:                    COMMENT,
-	`^scripted_(trigger|effect)`: SCRIPT,
-	`^(\w+):?[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*`: WORD,
-	`^"(.*?)"`:           WORD,
-	`^-?\d+[\.,]?(\d?)+`: NUMBER,
-	`^ +`:                NULL,
-	`^\n+`:               NEXTLINE,
-	`^\t+`:               NULL,
-	`^==?`:               EQUALS,
-	`^{`:                 START,
-	`^}`:                 END,
+var TokenTypeToRegex = map[TokenType]string{
+	COMMENT:    `^#(.+)?`,
+	SCRIPT:     `^scripted_(trigger|effect)`,
+	WORD:       `^(?:\w+:)?\w+(?:\.\w+)*`,
+	STRING:     `^"(.*?)"`,
+	NUMBER:     `^-?\d+[\.,]?(\d?)+`,
+	BOOL:       `^(yes|no)`,
+	NEXTLINE:   `^\n+`,
+	EQUALS:     `^==?`,
+	START:      `^{`,
+	END:        `^}`,
+	WHITESPACE: `^ +`,
+	TAB:        `^\t+`,
+	COMPARISON: `^[\<\>]=?`,
+}
+
+var TokenCheckOrder = []TokenType{
+	WHITESPACE,
+	TAB,
+	NEXTLINE,
+	COMPARISON,
+	COMMENT,
+	SCRIPT,
+	STRING,
+	BOOL,
+	NUMBER,
+	WORD,
+	EQUALS,
+	START,
+	END,
 }
 
 type Token struct {
@@ -42,6 +60,6 @@ type Token struct {
 	Value []byte    `json:"value"`
 }
 
-func (t Token) String() string {
+func (t *Token) String() string {
 	return fmt.Sprintf("type:\t%v,\tvalue:\t%v", t.Type, strconv.Quote(string(t.Value)))
 }

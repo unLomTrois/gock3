@@ -3,7 +3,6 @@ package lexer
 import (
 	"bufio"
 	"bytes"
-	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -11,22 +10,16 @@ import (
 
 type Lexer struct {
 	Text    []byte
-	cursor  int
+	Cursor  int
 	_string []byte
 	Line    int
 }
 
+// trims spaces and converts crlf to lf
 func NormalizeText(text []byte) []byte {
-
 	text = bytes.TrimSpace(text)
-	// text = bytes.ReplaceAll(text, []byte("    "), []byte("\t"))
 	text = bytes.ReplaceAll(text, []byte("\r\n"), []byte("\n"))
-	// text = bytes.ReplaceAll(text, []byte("\t\n"), []byte("\n"))
-	// text = bytes.ReplaceAll(text, []byte("\t"), []byte(""))
-	// text = bytes.ReplaceAll(text, []byte(" = "), []byte("="))
-	// text = bytes.ReplaceAll(text, []byte("= {"), []byte("={"))
-
-	// replace \n\n\n.. with \n\n
+	// replace \n\n\n.. with \n\n, so it's only one line
 	reg := regexp.MustCompile(`\n{3,}`)
 	text = reg.ReplaceAll(text, []byte("\n\n"))
 
@@ -35,7 +28,6 @@ func NormalizeText(text []byte) []byte {
 
 func New(text []byte) *Lexer {
 	normalized := NormalizeText(text)
-	// fmt.Println(strconv.Quote(string(normalized)))
 
 	new_file, _ := os.Create("./tmp/normalized.txt")
 	defer new_file.Close()
@@ -46,82 +38,79 @@ func New(text []byte) *Lexer {
 
 	return &Lexer{
 		Text:   normalized,
-		cursor: 0,
+		Cursor: 0,
 		Line:   1,
 	}
 }
 
 func (l *Lexer) hasMoreTokens() bool {
-	return l.cursor < len(l.Text)
+	return l.Cursor < len(l.Text)
 }
 
-// func (l *Lexer) isEOF() bool {
-// 	return l.cursor == len(l.Text)
-// }
+func (l *Lexer) Scan() ([]*Token, error) {
 
-func (l *Lexer) match(reg *regexp.Regexp, text []byte) []byte {
-	if match := reg.Find(text); match != nil {
-		l.cursor += len(match)
-		return match
+	var tokens []*Token
+
+	for {
+		if !l.hasMoreTokens() {
+			break
+		}
+
+		token, err := l.GetNextToken()
+		if err != nil {
+			return nil, err
+		}
+		if token == nil {
+			continue
+		}
+
+		tokens = append(tokens, token)
 	}
-	return nil
+
+	return tokens, nil
 }
 
 func (l *Lexer) GetNextToken() (*Token, error) {
-	if !l.hasMoreTokens() {
-		return nil, nil
-	}
 
-	l._string = l.Text[l.cursor:]
+	l.Text = l.Text[l.Cursor:]
 
-	for k, token_type := range Spec {
-		// todo: implement less greedy matching
-		// fmt.Println("try:", k, "on: ", string(l._string[0:10]))
-		reg := regexp.MustCompile(k)
-		token_value := l.match(reg, l._string)
-		if token_value == nil {
-			// fmt.Println("continue")
+	for _, tokentype := range TokenCheckOrder {
+		reg := regexp.MustCompile(TokenTypeToRegex[tokentype])
+		match := l.match(reg, l.Text)
+		l.Cursor = len(match)
+		if match == nil {
 			continue
 		}
-		if token_type == WORD {
-			match, err := regexp.MatchString(`^scripted_(trigger|effect)`, string(l._string))
-			if err != nil {
-				return nil, err
-			}
-			if match {
-				token_type = SCRIPT
-			}
-		}
-
-		if token_type == NEXTLINE {
-			l.Line++
+		if tokentype == WHITESPACE || tokentype == TAB {
 			return l.GetNextToken()
 		}
-		if token_type == NULL {
-			// fmt.Println("null")
+		if tokentype == NEXTLINE {
+			// l.Line++
 			return l.GetNextToken()
 		}
-		// fmt.Println(string(token_type), strconv.Quote(string(token_value)))
-
-		// fmt.Println("return")
 		return &Token{
-			Type:  token_type,
-			Value: token_value,
+			Type:  tokentype,
+			Value: match,
 		}, nil
 	}
+	panic("[Lexer] Unexpected token: " + strconv.Quote(string(l.Text[0])))
+}
 
-	log.Println(string(l._string[0]))
-
-	panic("[Lexer] Unexpected token: " + strconv.Quote(string(l._string[0])))
+func (l *Lexer) match(reg *regexp.Regexp, text []byte) []byte {
+	match := reg.Find(text)
+	if match == nil {
+		return nil
+	}
+	return match
 }
 
 func (l *Lexer) GetContext(window int) string {
-	if l.cursor < len(l.Text) {
-		end := l.cursor + window
+	if l.Cursor < len(l.Text) {
+		end := l.Cursor + window
 		if end > len(l.Text) {
 			end = len(l.Text)
 		}
-		return string(l.Text[l.cursor:end])
+		return string(l.Text[l.Cursor:end])
 	}
 	return ""
 }
