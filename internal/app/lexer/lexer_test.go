@@ -154,7 +154,7 @@ func TestLexer_Scan(t *testing.T) {
 				t.Errorf("Lexer.Scan() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !reflect.DeepEqual(got.Stream, tt.want) {
 				t.Errorf("Lexer.Scan() = %v, \nwant %v", got, tt.want)
 			}
 		})

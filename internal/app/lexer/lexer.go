@@ -9,10 +9,9 @@ import (
 )
 
 type Lexer struct {
-	Text    []byte
-	Cursor  int
-	_string []byte
-	Line    int
+	Text   []byte
+	Cursor int
+	Line   int
 }
 
 // trims spaces and converts crlf to lf
@@ -47,9 +46,9 @@ func (l *Lexer) hasMoreTokens() bool {
 	return l.Cursor < len(l.Text)
 }
 
-func (l *Lexer) Scan() ([]*Token, error) {
+func (l *Lexer) Scan() (*TokenStream, error) {
 
-	var tokens []*Token
+	tokenstream := NewTokenStream()
 
 	for {
 		if !l.hasMoreTokens() {
@@ -64,10 +63,10 @@ func (l *Lexer) Scan() ([]*Token, error) {
 			continue
 		}
 
-		tokens = append(tokens, token)
+		tokenstream.Push(token)
 	}
 
-	return tokens, nil
+	return tokenstream, nil
 }
 
 func (l *Lexer) GetNextToken() (*Token, error) {
