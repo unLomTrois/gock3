@@ -4,7 +4,7 @@ import (
 	// "ck3-parser/internal/app/linter"
 
 	"ck3-parser/internal/app/lexer"
-	"ck3-parser/internal/app/parser2"
+	"ck3-parser/internal/app/parser"
 	"encoding/json"
 	"io"
 	"log"
@@ -38,7 +38,7 @@ func main() {
 		log.Println("Parsed data saved to tmp/tokenstream.json")
 	}
 
-	parser := parser2.New(tokenstream)
+	parser := parser.New(tokenstream)
 	parsetree := parser.Parse()
 	// parser.Parse()
 

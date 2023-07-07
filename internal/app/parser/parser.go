@@ -3,63 +3,34 @@ package parser
 import (
 	"ck3-parser/internal/app/lexer"
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"path/filepath"
-	"strconv"
 )
 
 type Parser struct {
-	Filepath  string       `json:"filepath"`
-	lexer     *lexer.Lexer `json:"-"`
-	lookahead *lexer.Token `json:"-"`
-	Data      []*Node      `json:"data"`
-	scope     *Node
+	tokenstream *lexer.TokenStream
+	lookahead   *lexer.Token
 }
 
-func New(file *os.File) (*Parser, error) {
-	file_path, err := filepath.Abs(file.Name())
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	lexer := lexer.New(b)
-
+func New(tokenstream *lexer.TokenStream) *Parser {
 	return &Parser{
-		Filepath:  file_path,
-		lexer:     lexer,
-		lookahead: nil,
-		Data:      nil,
-		scope:     nil,
-	}, nil
-}
-
-func (p *Parser) Parse() (*Parser, error) {
-	var err error
-	p.lookahead, err = p.lexer.GetNextToken()
-	if err != nil {
-		return nil, err
+		tokenstream: tokenstream,
+		lookahead:   nil,
 	}
-
-	p.Data = p.NodeList()
-
-	return p, nil
 }
 
-func (p *Parser) NodeList(opt_stop_lookahead ...lexer.TokenType) []*Node {
+func (p *Parser) Parse() []*Node {
+	p.lookahead = p.tokenstream.Next()
+
+	return p.List()
+}
+
+func (p *Parser) List(stop_lookahead ...lexer.TokenType) []*Node {
 	nodes := make([]*Node, 0)
 
 	for {
 		if p.lookahead == nil {
 			break
 		}
-		if len(opt_stop_lookahead) > 0 && p.lookahead.Type == opt_stop_lookahead[0] {
+		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
 			break
 		}
 
@@ -71,15 +42,10 @@ func (p *Parser) NodeList(opt_stop_lookahead ...lexer.TokenType) []*Node {
 }
 
 func (p *Parser) Node() *Node {
-	fmt.Println("\n[LINE]", p.lexer.Line)
-
-	if p.scope != nil {
-		fmt.Println("[SCOPE]", p.scope.Key)
-	}
 
 	switch p.lookahead.Type {
-	case lexer.SCRIPT:
-		return p.ScriptNode()
+	// case lexer.SCRIPT:
+	// 	return p.ScriptNode()
 	case lexer.COMMENT:
 		return p.CommentNode()
 	default:
@@ -88,123 +54,51 @@ func (p *Parser) Node() *Node {
 }
 
 func (p *Parser) CommentNode() *Node {
-	fmt.Println("[COMMENT-NODE]")
-
 	return &Node{
-		Type: Comment,
-		Data: p.CommentLiteral(),
+		Type:  Comment,
+		Value: p.CommentLiteral(),
 	}
-}
-
-func (p *Parser) ScriptNode() *Node {
-	fmt.Println("[SCRIPT-NODE]")
-	p.ScriptLiteral()
-
-	fmt.Println("--[KEY]")
-	key := p.Literal()
-	fmt.Println("--[OPERATION]")
-	operator := p.expect(lexer.EQUALS)
-	node := &Node{
-		Type:     Script,
-		Key:      key,
-		Operator: string(operator.Value),
-		Data:     nil,
-	}
-	if p.scope == nil {
-		node.Type = Entity
-		p.scope = node
-		fmt.Println("--[NEW SCOPE]", p.scope.Key)
-	}
-
-	node.Data = p.BlockNode()
-
-	fmt.Println("--[ENDSCRIPT]", p.scope.Key)
-
-	p.expect(lexer.END)
-	if p.scope == node {
-		p.scope = nil
-	}
-
-	return node
 }
 
 func (p *Parser) ExpressionNode() *Node {
-	fmt.Println("[EXPRESSION-NODE]")
-	fmt.Println("--[KEY]")
-	lvalue := p.Literal()
+	key := p.Literal()
 
-	var nodetype NodeType
+	var tokentype NodeType
 	var operator *lexer.Token
-	var rvalue string
-	fmt.Println("--[OPERATION]")
-
 	switch p.lookahead.Type {
 	case lexer.EQUALS:
-		operator = p.expect(lexer.EQUALS)
-		if string(operator.Value) == "==" {
-			nodetype = Comparison
-		} else {
-			nodetype = Property
-		}
-		rvalue = string(operator.Value)
+		operator = p.Expect(lexer.EQUALS)
+		tokentype = Property
 	case lexer.COMPARISON:
-		operator = p.expect(lexer.COMPARISON)
-		nodetype = Comparison
-		rvalue = string(operator.Value)
+		operator = p.Expect(lexer.COMPARISON)
+		tokentype = Comparison
 	}
-
-	var value interface{}
 
 	switch p.lookahead.Type {
-	case lexer.WORD, lexer.NUMBER:
-		fmt.Println("--[VALUE]")
-		value = p.Literal()
-		return &Node{
-			Type:     nodetype,
-			Key:      lvalue,
-			Operator: rvalue,
-			Data:     value,
-		}
-	case lexer.START:
-		// fmt.Println("--[BLOCK]")
+	case lexer.WORD, lexer.STRING, lexer.NUMBER, lexer.BOOL:
+		value := p.Literal()
 		node := &Node{
-			Type:     Block,
-			Key:      lvalue,
-			Operator: rvalue,
-			Data:     nil,
+			Type:  tokentype,
+			Key:   key,
+			Value: value,
 		}
-
-		if p.scope == nil {
-			node.Type = Entity
-			p.scope = node
-			fmt.Println("--[NEW SCOPE]", p.scope.Key)
+		if tokentype == Comparison {
+			node.Operator = operator.Value
 		}
-
-		node.Data = p.BlockNode()
-		p.expect(lexer.END)
-
-		if p.scope == node {
-			p.scope = nil
-		}
-
 		return node
-	default:
-		return nil
+	case lexer.START:
+		p.Expect(lexer.START)
+		value := p.List(lexer.END)
+		p.Expect(lexer.END)
+
+		return &Node{
+			Type:  Block,
+			Key:   key,
+			Value: value,
+		}
 	}
-}
 
-func (p *Parser) BlockNode() []*Node {
-	fmt.Println("--[BlockNode]")
-
-	p.expect(lexer.START)
-
-	if p.lookahead.Type == lexer.END {
-		// 	p.expect(lexer.END)
-
-		return nil
-	} else {
-		return p.NodeList(lexer.END)
-	}
+	return nil
 }
 
 func (p *Parser) Literal() interface{} {
@@ -215,53 +109,56 @@ func (p *Parser) Literal() interface{} {
 		return p.WordLiteral()
 	case lexer.NUMBER:
 		return p.NumberLiteral()
+	case lexer.STRING:
+		return p.StringLiteral()
+	case lexer.BOOL:
+		return p.BoolLiteral()
 	case lexer.COMMENT:
 		return p.CommentLiteral()
 	default:
-		log.Println("[Parser]", p.lookahead.Value, p.lookahead.Type, p.lexer.Line)
-		panic(fmt.Sprintf("[Parser] Unexpected Literal: %q, with type of: %s and line: %d\ncontext: %s",
-			p.lookahead.Value, p.lookahead.Type, p.lexer.Line, p.lexer.GetContext(100)))
+		panic(fmt.Sprintf("[Parser] Unexpected Literal: %q, with type of: %s",
+			p.lookahead.Value, p.lookahead.Type))
 	}
-}
-
-func (p *Parser) ScriptLiteral() string {
-	token := p.expect(lexer.SCRIPT)
-	return string(token.Value)
-}
-
-func (p *Parser) WordLiteral() string {
-	token := p.expect(lexer.WORD)
-	return string(token.Value)
-}
-
-func (p *Parser) NumberLiteral() float32 {
-	token := p.expect(lexer.NUMBER)
-	number, err := strconv.ParseFloat(string(token.Value), 32)
-	if err != nil {
-		panic("[Parser] Unexpected NumberLiteral: " + strconv.Quote(string(token.Value)))
-	}
-	return float32(number)
 }
 
 func (p *Parser) CommentLiteral() string {
-	token := p.expect(lexer.COMMENT)
-	return string(token.Value)
+	token := p.Expect(lexer.COMMENT)
+	return token.Value
 }
 
-func (p *Parser) expect(tokentype lexer.TokenType) *lexer.Token {
-	token := p.lookahead
-	if token == nil {
-		panic("[Parser] Unexpected end of input, expected: " + string(tokentype))
-	}
-	if token.Type != tokentype {
-		panic("[Parser] Unexpected token: \"" + string(token.Value) + "\" with type of " + string(token.Type) + ", expected type: " + string(tokentype))
-	}
-	fmt.Println(string(p.lookahead.Type), strconv.Quote(string(p.lookahead.Value)), p.lexer.Line)
+func (p *Parser) WordLiteral() string {
+	token := p.Expect(lexer.WORD)
+	return token.Value
+}
 
-	var err error
-	p.lookahead, err = p.lexer.GetNextToken()
-	if err != nil {
-		panic(err)
+func (p *Parser) NumberLiteral() string {
+	token := p.Expect(lexer.NUMBER)
+	return token.Value
+}
+
+func (p *Parser) BoolLiteral() string {
+	token := p.Expect(lexer.BOOL)
+	return token.Value
+}
+
+func (p *Parser) StringLiteral() string {
+	token := p.Expect(lexer.STRING)
+	return token.Value
+}
+
+// checks if the next token is the expected type and returns it
+func (p *Parser) Expect(expectedtype lexer.TokenType) *lexer.Token {
+	token := p.lookahead
+
+	if token == nil {
+		panic("[Parser] Unexpected end of input, expected: " + string(expectedtype))
 	}
+	if token.Type != expectedtype {
+		fmt.Println(p.tokenstream.Cursor)
+		panic("[Parser] Unexpected token: \"" + string(token.Value) + "\" with type of " + string(token.Type) + "\nexpected type: " + string(expectedtype))
+	}
+
+	p.lookahead = p.tokenstream.Next()
+
 	return token
 }

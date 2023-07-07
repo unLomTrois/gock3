@@ -2,7 +2,7 @@
 package linter
 
 import (
-	parser "ck3-parser/internal/app/parser"
+	parser "ck3-parser/internal/app/parserremove"
 
 	"bytes"
 	"fmt"
