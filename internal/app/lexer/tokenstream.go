@@ -2,13 +2,13 @@ package lexer
 
 type TokenStream struct {
 	Stream []*Token
-	cursor int
+	Cursor int
 }
 
 func NewTokenStream() *TokenStream {
 	return &TokenStream{
 		Stream: []*Token{},
-		cursor: 0,
+		Cursor: 0,
 	}
 }
 
@@ -19,11 +19,11 @@ func (ts *TokenStream) Push(token *Token) *TokenStream {
 }
 
 func (ts *TokenStream) Next() *Token {
-	if ts.cursor >= len(ts.Stream) {
+	if ts.Cursor >= len(ts.Stream) {
 		return nil
 	}
-	token := ts.Stream[ts.cursor]
-	ts.cursor++
+	token := ts.Stream[ts.Cursor]
+	ts.Cursor++
 
 	return token
 }

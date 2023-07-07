@@ -19,11 +19,11 @@ type Node struct {
 	Type     NodeType    `json:"type"`
 	Key      interface{} `json:"key,omitempty"`
 	Operator string      `json:"operator,omitempty"`
-	Data     interface{} `json:"value,omitempty"`
+	Value    interface{} `json:"value,omitempty"`
 }
 
 func (n *Node) Node() *Node {
-	return n.Data.(*Node)
+	return n.Value.(*Node)
 }
 
 func (n *Node) KeyLiteral() []byte {
@@ -38,7 +38,7 @@ func (n *Node) KeyLiteral() []byte {
 
 func (n *Node) DataLiteral() []byte {
 
-	switch t := n.Data.(type) {
+	switch t := n.Value.(type) {
 	case string:
 		return []byte(t)
 	case float32:

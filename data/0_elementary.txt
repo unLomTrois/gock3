@@ -1,16 +1,19 @@
-# Comment in file scope
-namespace = fp1_yearly
-# fp1_yearly.2400 = {
-# 	# Comment in event scope
-# 	type = character_event
-# 	title = fp1_yearly.2400.t
-# 	desc = fp1_yearly.2400.desc
-# 	theme = hunt_activity
-# 	left_portrait = {
-# 		character = root
-# 		animation = personality_rational
-# 	}
-# 	override_background = {
-# 		event_background = fp1_runestone
-# 	}
-# }
+# Comment outside
+namespace = test
+test.1 = {
+	type = character_event
+	trigger = {
+		scope:character = character.123
+		has_dlc = "DLC1"
+	}
+	effect = {
+		if = {
+			limit = {
+				# Comment inside
+				ai = yes
+				gold >= 100
+			}
+			add_gold = -100
+		}
+	}
+}

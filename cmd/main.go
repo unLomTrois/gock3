@@ -4,6 +4,7 @@ import (
 	// "ck3-parser/internal/app/linter"
 
 	"ck3-parser/internal/app/lexer"
+	"ck3-parser/internal/app/parser2"
 	"encoding/json"
 	"io"
 	"log"
@@ -37,29 +38,14 @@ func main() {
 		log.Println("Parsed data saved to tmp/tokenstream.json")
 	}
 
-	// parser := parser2.New(tokenstream)
+	parser := parser2.New(tokenstream)
+	parsetree := parser.Parse()
 	// parser.Parse()
 
-	// Parse file
-	// parser, err := parser.New(file)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	SaveJSON(parsetree, "parsetree.json")
+	log.Println("Parsed data saved to tmp/parsetree.json")
 
-	// p, err := parser.Parse()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// Save parsed data
-	// err = SaveJSON(p, "parsed.json")
-	// log.Println("Parsed data saved to tmp/parsed.json")
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// // Lint file
+	// Lint file
 	// linter := linter.NewLinter(p.Filepath, p.Data)
 	// linter.Lint()
 
