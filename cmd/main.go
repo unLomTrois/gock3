@@ -4,6 +4,7 @@ import (
 	// "ck3-parser/internal/app/linter"
 
 	"ck3-parser/internal/app/lexer"
+	"ck3-parser/internal/app/linter"
 	"ck3-parser/internal/app/parser"
 	"encoding/json"
 	"io"
@@ -34,26 +35,23 @@ func main() {
 	err = SaveJSON(tokenstream, "tokenstream.json")
 	if err != nil {
 		panic(err)
-	} else {
-		log.Println("Parsed data saved to tmp/tokenstream.json")
 	}
+	log.Println("Tokenstream saved to tmp/tokenstream.json")
 
 	parser := parser.New(tokenstream)
 	parsetree := parser.Parse()
-	// parser.Parse()
-
-	SaveJSON(parsetree, "parsetree.json")
+	if err = SaveJSON(parsetree, "parsetree.json"); err != nil {
+		panic(err)
+	}
 	log.Println("Parsed data saved to tmp/parsetree.json")
 
 	// Lint file
-	// linter := linter.NewLinter(p.Filepath, p.Data)
-	// linter.Lint()
-
-	// lintedFilePath := "tmp/linted.txt"
-	// err = SaveLintedData(linter, lintedFilePath)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	linter := linter.New(parsetree)
+	linter.Lint()
+	if err = linter.Save("tmp/linted.txt"); err != nil {
+		panic(err)
+	}
+	log.Println("Linted file saved to tmp/linted.txt")
 }
 
 func SaveJSON(data interface{}, filename string) error {
@@ -78,18 +76,3 @@ func SaveJSON(data interface{}, filename string) error {
 
 	return nil
 }
-
-// func SaveLintedData(linter *linter.Linter, filepath string) error {
-// 	file, err := os.Create(filepath)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer file.Close()
-
-// 	_, err = file.Write(linter.LintedData())
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
