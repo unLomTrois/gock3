@@ -136,12 +136,17 @@ func (l *Linter) nextLine() {
 	l.towrite = append(l.towrite, byte('\n'))
 }
 
+// save file with utf8bom encoding:
 func (l *Linter) Save(filepath string) error {
 	file, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
+
+	// Write UTF-8 BOM
+	bom := []byte{0xEF, 0xBB, 0xBF}
+	file.Write(bom)
 
 	_, err = file.Write(l.towrite)
 	if err != nil {
