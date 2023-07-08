@@ -15,23 +15,20 @@ Parser makes AST (Abstract Syntax Tree), catches syntax errors (e.g. not closed 
 - [x] Implement Lexer
 - [x] Add tests on Lexer
 - [x] Implement Parser
+- [x] Update Linter
 - [ ] Add tests on Parser
-- [ ] Update Linter
 - [ ] Make a VSCode extension
 
 ## Example of work:
 
 ### Raw file
 
-![image](https://github.com/unLomTrois/gock3/assets/51882489/bc502829-7a9e-40d1-9b82-7343fb69cf01)
-
-### AST
-
-![image](https://github.com/unLomTrois/gock3/assets/51882489/3836d10e-6411-4b28-92aa-89120350a667)
+![image](https://github.com/unLomTrois/lexiCK3/assets/51882489/1aee3cad-f633-41a9-979d-50b4280541ea)
 
 ## Linted file:
 
-TODO
+![image](https://github.com/unLomTrois/lexiCK3/assets/51882489/9818b66d-2c2b-483e-bc7b-eb5c64cd7ab3)
+
 
 ## P.S.
 
