@@ -2,6 +2,7 @@ package linter
 
 import (
 	"ck3-parser/internal/app/parser"
+	"fmt"
 	"os"
 )
 
@@ -45,8 +46,14 @@ func (l *Linter) lintNode(node *parser.Node) {
 		l.lintComment(node)
 	case parser.Property:
 		l.lintProperty(node)
+	case parser.Comparison:
+		l.lintComparison(node)
 	case parser.Block:
 		l.lintBlock(node)
+	default:
+		panic(fmt.Sprintf("[Linter] Unexpected NodeType: %q, with value of: %s",
+			node.Type, node.Value))
+
 	}
 }
 
@@ -69,7 +76,19 @@ func (l *Linter) lintProperty(node *parser.Node) {
 	}
 
 	l.towrite = append(l.towrite, node.KeyLiteral()...)
-	l.equals()
+	l.operator("=")
+	l.towrite = append(l.towrite, node.DataLiteral()...)
+
+	l.nextLine()
+}
+
+func (l *Linter) lintComparison(node *parser.Node) {
+	if len(l.towrite) > 0 && l.towrite[len(l.towrite)-1] != ' ' {
+		l.intend()
+	}
+
+	l.towrite = append(l.towrite, node.KeyLiteral()...)
+	l.operator(node.Operator)
 	l.towrite = append(l.towrite, node.DataLiteral()...)
 
 	l.nextLine()
@@ -84,7 +103,7 @@ func (l *Linter) lintBlock(node *parser.Node) {
 	l.Level++
 
 	l.towrite = append(l.towrite, node.KeyLiteral()...)
-	l.equals()
+	l.operator("=")
 	l.towrite = append(l.towrite, byte('{'))
 
 	l.nextLine()
@@ -107,9 +126,9 @@ func (l *Linter) intend() {
 	}
 }
 
-func (l *Linter) equals() {
+func (l *Linter) operator(operator string) {
 	l.towrite = append(l.towrite, byte(' '))
-	l.towrite = append(l.towrite, byte('='))
+	l.towrite = append(l.towrite, []byte(operator)...)
 	l.towrite = append(l.towrite, byte(' '))
 }
 
