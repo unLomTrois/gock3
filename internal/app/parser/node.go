@@ -1,6 +1,8 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type NodeType string
 
@@ -14,10 +16,25 @@ const (
 	Comparison NodeType = "Comparison"
 )
 
+type LiteralType string
+
+const (
+	NumberLiteral  LiteralType = "NumberLiteral"
+	BoolLiteral    LiteralType = "BoolLiteral"
+	StringLiteral  LiteralType = "StringLiteral"
+	WordLiteral    LiteralType = "WordLiteral"
+	CommentLiteral LiteralType = "CommentLiteral"
+)
+
+type Literal struct {
+	Type  LiteralType `json:"type"`
+	Value interface{} `json:"value"`
+}
+
 type Node struct {
 	// Parent *any     `json:"-"`
 	Type     NodeType    `json:"type"`
-	Key      interface{} `json:"key,omitempty"`
+	Key      *Literal    `json:"key,omitempty"`
 	Operator string      `json:"operator,omitempty"`
 	Value    interface{} `json:"value,omitempty"`
 }
@@ -26,24 +43,24 @@ func (n *Node) Node() *Node {
 	return n.Value.(*Node)
 }
 
-func (n *Node) KeyLiteral() []byte {
-	switch t := n.Key.(type) {
-	case string:
-		return []byte(t)
-	case float32:
-		return []byte(fmt.Sprintf("%g", t))
+func (l *Literal) String() string {
+	switch l.Type {
+	case StringLiteral, CommentLiteral, WordLiteral, BoolLiteral:
+		return l.Value.(string)
+	case NumberLiteral:
+		return fmt.Sprintf("%g", l.Value.(float64))
+	default:
+		panic("Unknown literal type:" + l.Type)
 	}
-	return nil
+}
+
+func (n *Node) KeyLiteral() []byte {
+	return []byte(n.Key.String())
 }
 
 func (n *Node) DataLiteral() []byte {
-
-	switch t := n.Value.(type) {
-	case string:
-		return []byte(t)
-	case float32:
-		return []byte(fmt.Sprintf("%g", t))
+	if n.Type == Comment {
+		return []byte(n.Value.(string))
 	}
-
-	return nil
+	return []byte(n.Value.(*Literal).String())
 }

@@ -61,7 +61,7 @@ func (l *Linter) lintComment(node *parser.Node) {
 	if len(l.towrite) > 0 && l.towrite[len(l.towrite)-1] != ' ' {
 		l.intend()
 	}
-	l.towrite = append(l.towrite, []byte(node.Value.(string))...)
+	l.towrite = append(l.towrite, node.DataLiteral()...)
 	l.nextLine()
 	// if l.singleline {
 	// 	l.towrite = append(l.towrite, byte(' '))
