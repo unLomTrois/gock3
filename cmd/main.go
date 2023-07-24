@@ -46,7 +46,16 @@ func main() {
 	log.Println("Parsed data saved to tmp/parsetree.json")
 
 	// Lint file
-	linter := linter.New(parsetree)
+	lintconfig := linter.LintConfig{
+		IntendStyle:            linter.TABS,
+		IntendSize:             4,
+		TrimTrailingWhitespace: true,
+		InsertFinalNewline:     true,
+		CharSet:                "utf-8-bom",
+		EndOfLine:              []byte("\r\n"),
+	}
+
+	linter := linter.New(parsetree, lintconfig)
 	linter.Lint()
 	if err = linter.Save("tmp/linted.txt"); err != nil {
 		panic(err)
