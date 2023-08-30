@@ -16,7 +16,7 @@ Parser makes AST (Abstract Syntax Tree), catches syntax errors (e.g. not closed 
 - [x] Add tests on Lexer
 - [x] Implement Parser
 - [x] Update Linter
-- [ ] Add tests on Parser
+- [X] Add tests on Parser
 - [ ] Make a VSCode extension
 
 ## Example of work:
