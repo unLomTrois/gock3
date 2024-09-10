@@ -79,8 +79,17 @@ func scanContent(content []byte) (*lexer.TokenStream, error) {
 		log.Printf("Scan time: %s", time.Since(start))
 	}()
 
-	l := lexer.New(content)
-	return l.Scan()
+	l, err := lexer.New(content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create lexer: %w", err)
+	}
+
+	tokenStream, err := l.Scan()
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan content: %w", err)
+	}
+
+	return tokenStream, nil
 }
 
 func parseTokens(tokens *lexer.TokenStream) ([]*parser.Node, error) {

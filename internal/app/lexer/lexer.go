@@ -1,117 +1,120 @@
+// internal/app/lexer/lexer.go
 package lexer
 
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"os"
 	"regexp"
-	"strconv"
 )
 
 type Lexer struct {
-	Text      []byte
-	Cursor    int
-	Line      int
-	regexpmap map[TokenType]*regexp.Regexp
+	text      []byte
+	cursor    int
+	line      int
+	regexpMap map[TokenType]*regexp.Regexp
 }
 
-// trims spaces and converts crlf to lf
+// NormalizeText trims spaces and converts CRLF to LF
 func NormalizeText(text []byte) []byte {
 	text = bytes.TrimSpace(text)
 	text = bytes.ReplaceAll(text, []byte("\r\n"), []byte("\n"))
-	// replace \n\n\n.. with \n\n, so it's only one line
-	reg := regexp.MustCompile(`\n{3,}`)
-	text = reg.ReplaceAll(text, []byte("\n\n"))
-
-	return text
+	return regexp.MustCompile(`\n{3,}`).ReplaceAll(text, []byte("\n\n"))
 }
 
-func New(text []byte) *Lexer {
+// New creates a new Lexer instance
+func New(text []byte) (*Lexer, error) {
 	normalized := NormalizeText(text)
 
-	new_file, _ := os.Create("./tmp/normalized.txt")
-	defer new_file.Close()
-
-	w := bufio.NewWriter(new_file)
-	w.Write(normalized)
-	w.Flush()
+	if err := saveNormalizedText(normalized); err != nil {
+		return nil, fmt.Errorf("failed to save normalized text: %w", err)
+	}
 
 	return &Lexer{
-		Text:      normalized,
-		Cursor:    0,
-		Line:      1,
-		regexpmap: CompileRegexes(),
+		text:      normalized,
+		cursor:    0,
+		line:      1,
+		regexpMap: CompileRegexes(),
+	}, nil
+}
+
+func saveNormalizedText(text []byte) error {
+	file, err := os.Create("./tmp/normalized.txt")
+	if err != nil {
+		return err
 	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	if _, err := writer.Write(text); err != nil {
+		return err
+	}
+	return writer.Flush()
 }
 
 func (l *Lexer) hasMoreTokens() bool {
-	return l.Cursor < len(l.Text)
+	return l.cursor < len(l.text)
 }
 
+// Scan tokenizes the entire input text
 func (l *Lexer) Scan() (*TokenStream, error) {
+	tokenStream := NewTokenStream()
 
-	tokenstream := NewTokenStream()
-
-	for {
-		if !l.hasMoreTokens() {
-			break
-		}
-
-		token, err := l.GetNextToken()
+	for l.hasMoreTokens() {
+		token, err := l.getNextToken()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning tokens: %w", err)
 		}
-		if token == nil {
-			continue
+		if token != nil {
+			tokenStream.Push(token)
 		}
-
-		tokenstream.Push(token)
 	}
 
-	return tokenstream, nil
+	return tokenStream, nil
 }
 
-func (l *Lexer) GetNextToken() (*Token, error) {
+func (l *Lexer) getNextToken() (*Token, error) {
+	l.text = l.text[l.cursor:]
 
-	l.Text = l.Text[l.Cursor:]
-
-	for _, tokentype := range TokenCheckOrder {
-		reg := l.regexpmap[tokentype]
-		match := l.match(reg, l.Text)
-		l.Cursor = len(match)
+	for _, tokenType := range TokenCheckOrder {
+		reg := l.regexpMap[tokenType]
+		match := l.match(reg)
 		if match == nil {
 			continue
 		}
-		if tokentype == WHITESPACE || tokentype == TAB {
-			return l.GetNextToken()
+
+		l.cursor = len(match)
+
+		switch tokenType {
+		case WHITESPACE, TAB:
+			return l.getNextToken()
+		case NEXTLINE:
+			l.line++
+			return l.getNextToken()
+		default:
+			return &Token{
+				Type:  tokenType,
+				Value: string(match),
+			}, nil
 		}
-		if tokentype == NEXTLINE {
-			// l.Line++
-			return l.GetNextToken()
-		}
-		return &Token{
-			Type:  tokentype,
-			Value: string(match),
-		}, nil
 	}
-	panic("[Lexer] Unexpected token: " + strconv.Quote(string(l.Text[0])))
+
+	return nil, fmt.Errorf("unexpected token at position: line %d, col %d: %q", l.line, l.cursor, string(l.text[0]))
 }
 
-func (l *Lexer) match(reg *regexp.Regexp, text []byte) []byte {
-	match := reg.Find(text)
-	if match == nil {
-		return nil
-	}
-	return match
+func (l *Lexer) match(reg *regexp.Regexp) []byte {
+	return reg.Find(l.text)
 }
 
+// GetContext returns a window of characters around the current cursor position
 func (l *Lexer) GetContext(window int) string {
-	if l.Cursor < len(l.Text) {
-		end := l.Cursor + window
-		if end > len(l.Text) {
-			end = len(l.Text)
-		}
-		return string(l.Text[l.Cursor:end])
+	if l.cursor >= len(l.text) {
+		return ""
 	}
-	return ""
+	end := l.cursor + window
+	if end > len(l.text) {
+		end = len(l.text)
+	}
+	return string(l.text[l.cursor:end])
 }
