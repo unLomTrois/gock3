@@ -1,12 +1,13 @@
 package lexer
 
 import (
-	"fmt"
+	"log"
 	"regexp"
 )
 
 type TokenType string
 
+// Grouping constants for better readability
 const (
 	COMMENT    TokenType = "COMMENT"
 	SCRIPT     TokenType = "SCRIPT"
@@ -23,7 +24,8 @@ const (
 	COMPARISON TokenType = "COMPARISON"
 )
 
-var TokenTypeToRegex = map[TokenType]string{
+// Mapping TokenType to respective regex patterns
+var tokenTypeRegexMap = map[TokenType]string{
 	COMMENT:    `^#(.+)?`,
 	SCRIPT:     `^scripted_(trigger|effect)`,
 	WORD:       `^(?:\w+:)?\w+(?:\.\w+)*`,
@@ -39,7 +41,8 @@ var TokenTypeToRegex = map[TokenType]string{
 	COMPARISON: `^[\<\>]=?`,
 }
 
-var TokenCheckOrder = []TokenType{
+// TokenCheckOrder defines the order in which tokens should be checked
+var tokenCheckOrder = []TokenType{
 	WHITESPACE,
 	TAB,
 	NEXTLINE,
@@ -55,17 +58,17 @@ var TokenCheckOrder = []TokenType{
 	END,
 }
 
-// CompileRegexes compiles the regular expressions from TokenTypeToRegex map
+// CompileRegexes compiles the regular expressions from tokenTypeRegexMap
 func CompileRegexes() map[TokenType]*regexp.Regexp {
-	var CompiledRegexMap = make(map[TokenType]*regexp.Regexp)
+	compiledRegexMap := make(map[TokenType]*regexp.Regexp)
 
-	for tokenType, regexStr := range TokenTypeToRegex {
-		regex, err := regexp.Compile(regexStr)
+	for tokenType, regexPattern := range tokenTypeRegexMap {
+		regex, err := regexp.Compile(regexPattern)
 		if err != nil {
-			panic(fmt.Sprintf("Failed to compile regex for TokenType %s: %s", tokenType, err))
+			log.Fatalf("Failed to compile regex for TokenType %s: %v", tokenType, err)
 		}
-		CompiledRegexMap[tokenType] = regex
+		compiledRegexMap[tokenType] = regex
 	}
 
-	return CompiledRegexMap
+	return compiledRegexMap
 }

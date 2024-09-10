@@ -77,7 +77,7 @@ func (l *Lexer) Scan() (*TokenStream, error) {
 func (l *Lexer) getNextToken() (*Token, error) {
 	l.text = l.text[l.cursor:]
 
-	for _, tokenType := range TokenCheckOrder {
+	for _, tokenType := range tokenCheckOrder {
 		reg := l.regexpMap[tokenType]
 		match := matchToken(reg, l.text)
 		if match == nil {
