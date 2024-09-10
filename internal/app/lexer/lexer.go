@@ -23,20 +23,16 @@ func NormalizeText(text []byte) []byte {
 	return regexp.MustCompile(`\n{3,}`).ReplaceAll(text, []byte("\n\n"))
 }
 
-// New creates a new Lexer instance
-func New(text []byte) (*Lexer, error) {
+// NewLexer creates a new Lexer instance
+func NewLexer(text []byte) *Lexer {
 	normalized := NormalizeText(text)
-
-	if err := saveNormalizedText(normalized); err != nil {
-		return nil, fmt.Errorf("failed to save normalized text: %w", err)
-	}
 
 	return &Lexer{
 		text:           normalized,
 		cursor:         0,
 		line:           1,
 		patternMatcher: NewTokenPatternMatcher(),
-	}, nil
+	}
 }
 
 func saveNormalizedText(text []byte) error {
