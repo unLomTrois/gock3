@@ -10,10 +10,10 @@ import (
 )
 
 type Lexer struct {
-	text      []byte
-	cursor    int
-	line      int
-	regexpMap map[TokenType]*regexp.Regexp
+	text           []byte
+	cursor         int
+	line           int
+	patternMatcher *TokenPatternMatcher
 }
 
 // NormalizeText trims spaces and converts CRLF to LF
@@ -32,10 +32,10 @@ func New(text []byte) (*Lexer, error) {
 	}
 
 	return &Lexer{
-		text:      normalized,
-		cursor:    0,
-		line:      1,
-		regexpMap: CompileRegexes(),
+		text:           normalized,
+		cursor:         0,
+		line:           1,
+		patternMatcher: NewTokenPatternMatcher(),
 	}, nil
 }
 
@@ -78,8 +78,7 @@ func (l *Lexer) getNextToken() (*Token, error) {
 	l.text = l.text[l.cursor:]
 
 	for _, tokenType := range tokenCheckOrder {
-		reg := l.regexpMap[tokenType]
-		match := matchToken(reg, l.text)
+		match := l.patternMatcher.MatchToken(tokenType, l.text)
 		if match == nil {
 			continue
 		}
