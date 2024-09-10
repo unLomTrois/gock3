@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 )
 
@@ -37,6 +38,21 @@ var TokenTypeToRegex = map[TokenType]string{
 	WHITESPACE: `^ +`,
 	TAB:        `^\t+`,
 	COMPARISON: `^[\<\>]=?`,
+}
+
+// CompileRegexes compiles the regular expressions from TokenTypeToRegex map
+func CompileRegexes() map[TokenType]*regexp.Regexp {
+	var CompiledRegexMap = make(map[TokenType]*regexp.Regexp)
+
+	for tokenType, regexStr := range TokenTypeToRegex {
+		regex, err := regexp.Compile(regexStr)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to compile regex for TokenType %s: %s", tokenType, err))
+		}
+		CompiledRegexMap[tokenType] = regex
+	}
+
+	return CompiledRegexMap
 }
 
 var TokenCheckOrder = []TokenType{
