@@ -27,7 +27,7 @@ func (tpm *TokenPatternMatcher) compileRegexes() {
 		SCRIPT:     `^scripted_(trigger|effect)`,
 		WORD:       `^(?:\w+:)?\w+(?:\.\w+)*`,
 		STRING:     `^"(.*?)"`,
-		NUMBER:     `^-?\d+[\.,]?(\d?)+`,
+		NUMBER:     `^-?\d+([.,]\d+)?`,
 		BOOL:       `^(yes|no)`,
 		NEXTLINE:   `^\n+`,
 		EQUALS:     `^==?`,
