@@ -23,7 +23,7 @@ scripted_trigger cooking_trigger = {
 func TestLexer_GetNextToken(t *testing.T) {
 	rawtext := []byte(elementary)
 
-	lexer := New(rawtext)
+	lexer := NewLexer(rawtext)
 
 	tests := []struct {
 		name       string
@@ -86,7 +86,7 @@ func TestLexer_GetNextToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := lexer.GetNextToken()
+			got, err := lexer.getNextToken()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Lexer.GetNextToken() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -98,7 +98,7 @@ func TestLexer_GetNextToken(t *testing.T) {
 				tt.posteffect()
 			}
 			if tt.skipnext {
-				lexer.GetNextToken()
+				lexer.getNextToken()
 			}
 		})
 	}
@@ -107,13 +107,13 @@ func TestLexer_GetNextToken(t *testing.T) {
 func TestLexer_Scan(t *testing.T) {
 	tests := []struct {
 		name    string
-		lexer   *Lexer
+		example []byte
 		want    []*Token
 		wantErr bool
 	}{
 		{
-			name:  "elementary is tokenized correctly",
-			lexer: New([]byte(elementary)),
+			name:    "elementary is tokenized correctly",
+			example: []byte(elementary),
 			want: []*Token{
 				{Type: WORD, Value: "namespace"},
 				{Type: EQUALS, Value: "="},
@@ -129,8 +129,8 @@ func TestLexer_Scan(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:  "elementary is tokenized correctly",
-			lexer: New([]byte(scripted_trigger)),
+			name:    "elementary is tokenized correctly",
+			example: []byte(scripted_trigger),
 			want: []*Token{
 				{Type: SCRIPT, Value: "scripted_trigger"},
 				{Type: WORD, Value: "cooking_trigger"},
@@ -148,8 +148,9 @@ func TestLexer_Scan(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		lexer := NewLexer(tt.example)
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.lexer.Scan()
+			got, err := lexer.Scan()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Lexer.Scan() error = %v, wantErr %v", err, tt.wantErr)
 				return
