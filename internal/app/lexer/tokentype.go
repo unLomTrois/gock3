@@ -39,21 +39,6 @@ var TokenTypeToRegex = map[TokenType]string{
 	COMPARISON: `^[\<\>]=?`,
 }
 
-// CompileRegexes compiles the regular expressions from TokenTypeToRegex map
-func CompileRegexes() map[TokenType]*regexp.Regexp {
-	var CompiledRegexMap = make(map[TokenType]*regexp.Regexp)
-
-	for tokenType, regexStr := range TokenTypeToRegex {
-		regex, err := regexp.Compile(regexStr)
-		if err != nil {
-			panic(fmt.Sprintf("Failed to compile regex for TokenType %s: %s", tokenType, err))
-		}
-		CompiledRegexMap[tokenType] = regex
-	}
-
-	return CompiledRegexMap
-}
-
 var TokenCheckOrder = []TokenType{
 	WHITESPACE,
 	TAB,
@@ -68,4 +53,19 @@ var TokenCheckOrder = []TokenType{
 	EQUALS,
 	START,
 	END,
+}
+
+// CompileRegexes compiles the regular expressions from TokenTypeToRegex map
+func CompileRegexes() map[TokenType]*regexp.Regexp {
+	var CompiledRegexMap = make(map[TokenType]*regexp.Regexp)
+
+	for tokenType, regexStr := range TokenTypeToRegex {
+		regex, err := regexp.Compile(regexStr)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to compile regex for TokenType %s: %s", tokenType, err))
+		}
+		CompiledRegexMap[tokenType] = regex
+	}
+
+	return CompiledRegexMap
 }
