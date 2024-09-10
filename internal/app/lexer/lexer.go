@@ -79,7 +79,7 @@ func (l *Lexer) getNextToken() (*Token, error) {
 
 	for _, tokenType := range TokenCheckOrder {
 		reg := l.regexpMap[tokenType]
-		match := l.match(reg)
+		match := matchToken(reg, l.text)
 		if match == nil {
 			continue
 		}
@@ -101,10 +101,6 @@ func (l *Lexer) getNextToken() (*Token, error) {
 	}
 
 	return nil, fmt.Errorf("unexpected token at position: line %d, col %d: %q", l.line, l.cursor, string(l.text[0]))
-}
-
-func (l *Lexer) match(reg *regexp.Regexp) []byte {
-	return reg.Find(l.text)
 }
 
 // GetContext returns a window of characters around the current cursor position
