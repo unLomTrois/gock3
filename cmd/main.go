@@ -117,7 +117,7 @@ func saveJSON(data interface{}, filename string) error {
 
 	enc := json.NewEncoder(file)
 	enc.SetEscapeHTML(false)
-	enc.SetIndent("", " ")
+	enc.SetIndent("", "\t")
 	if err := enc.Encode(data); err != nil {
 		return err
 	}
