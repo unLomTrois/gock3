@@ -24,7 +24,6 @@ func NewTokenPatternMatcher() *TokenPatternMatcher {
 func (tpm *TokenPatternMatcher) compileRegexes() {
 	tokenTypeRegexMap := map[TokenType]string{
 		COMMENT:    `^#(.+)?`,
-		SCRIPT:     `^scripted_(trigger|effect)`,
 		WORD:       `^(?:\w+:)?\w+(?:\.\w+)*`,
 		STRING:     `^"(.*?)"`,
 		NUMBER:     `^-?\d+([.,]\d+)?`,

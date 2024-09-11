@@ -7,18 +7,11 @@ import (
 
 const (
 	elementary = `
-namespace = cooking
+  namespace = cooking
 
-entity = {
-  scope:character = character.123
-}
-`
-
-	scriptedTrigger = `
-scripted_trigger cooking_trigger = {
-  condition1 = yes
-  condition2 = no
-}
+  entity = {
+    scope:character = character.123
+  }
 `
 )
 
@@ -101,23 +94,6 @@ func TestLexer_Scan(t *testing.T) {
 				{Type: WORD, Value: "scope:character"},
 				{Type: EQUALS, Value: "="},
 				{Type: WORD, Value: "character.123"},
-				{Type: END, Value: "}"},
-			},
-		},
-		{
-			name:  "Scripted trigger is tokenized correctly",
-			input: scriptedTrigger,
-			want: []*Token{
-				{Type: SCRIPT, Value: "scripted_trigger"},
-				{Type: WORD, Value: "cooking_trigger"},
-				{Type: EQUALS, Value: "="},
-				{Type: START, Value: "{"},
-				{Type: WORD, Value: "condition1"},
-				{Type: EQUALS, Value: "="},
-				{Type: BOOL, Value: "yes"},
-				{Type: WORD, Value: "condition2"},
-				{Type: EQUALS, Value: "="},
-				{Type: BOOL, Value: "no"},
 				{Type: END, Value: "}"},
 			},
 		},

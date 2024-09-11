@@ -19,7 +19,7 @@ func TestNewTokenPatternMatcher(t *testing.T) {
 
 	// Check if all expected token types are present
 	expectedTokenTypes := []TokenType{
-		COMMENT, SCRIPT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
+		COMMENT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
 		EQUALS, START, END, WHITESPACE, TAB, COMPARISON,
 	}
 
@@ -43,7 +43,7 @@ func TestTokenPatternMatcher_compileRegexes(t *testing.T) {
 
 	// Check if all expected token types are present
 	expectedTokenTypes := []TokenType{
-		COMMENT, SCRIPT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
+		COMMENT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
 		EQUALS, START, END, WHITESPACE, TAB, COMPARISON,
 	}
 
@@ -68,18 +68,6 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 			tokenType: COMMENT,
 			text:      []byte("# This is a comment\nAnd this is not!"),
 			want:      []byte("# This is a comment"),
-		},
-		{
-			name:      "Match SCRIPT token - trigger",
-			tokenType: SCRIPT,
-			text:      []byte("scripted_trigger some_name = { }"),
-			want:      []byte("scripted_trigger"),
-		},
-		{
-			name:      "Match SCRIPT token - effect",
-			tokenType: SCRIPT,
-			text:      []byte("scripted_effect some_name = { }"),
-			want:      []byte("scripted_effect"),
 		},
 		{
 			name:      "Match WORD token",

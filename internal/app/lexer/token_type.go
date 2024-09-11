@@ -5,7 +5,6 @@ type TokenType string
 // Grouping constants for better readability
 const (
 	COMMENT    TokenType = "COMMENT"
-	SCRIPT     TokenType = "SCRIPT"
 	WORD       TokenType = "WORD"
 	STRING     TokenType = "STRING"
 	NUMBER     TokenType = "NUMBER"
@@ -26,7 +25,6 @@ var tokenCheckOrder = []TokenType{
 	NEXTLINE,
 	COMPARISON,
 	COMMENT,
-	SCRIPT,
 	STRING,
 	BOOL,
 	NUMBER,

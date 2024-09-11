@@ -45,8 +45,6 @@ func (p *Parser) List(stop_lookahead ...lexer.TokenType) []*Node {
 func (p *Parser) Node() *Node {
 
 	switch p.lookahead.Type {
-	// case lexer.SCRIPT:
-	// 	return p.ScriptNode()
 	case lexer.COMMENT:
 		return p.CommentNode()
 	default:
@@ -105,8 +103,6 @@ func (p *Parser) ExpressionNode() *Node {
 
 func (p *Parser) Literal() *Literal {
 	switch p.lookahead.Type {
-	// case lexer.SCRIPT:
-	// 	return p.ScriptLiteral()
 	case lexer.WORD:
 		return p.WordLiteral()
 	case lexer.NUMBER:
