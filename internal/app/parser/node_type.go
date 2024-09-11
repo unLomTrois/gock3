@@ -1,13 +1,38 @@
 package parser
 
-type NodeType string
+type NodeType uint8
 
 const (
-	NextLine   NodeType = "NextLine"
-	Comment    NodeType = "Comment"
-	Entity     NodeType = "Entity"
-	Block      NodeType = "Block"
-	Script     NodeType = "Script"
-	Property   NodeType = "Property"
-	Comparison NodeType = "Comparison"
+	NextLine NodeType = iota
+	Comment
+	Entity
+	Block
+	Script
+	Property
+	Comparison
 )
+
+func (nt NodeType) String() string {
+	switch nt {
+	case NextLine:
+		return "NextLine"
+	case Comment:
+		return "Comment"
+	case Entity:
+		return "Entity"
+	case Block:
+		return "Block"
+	case Script:
+		return "Script"
+	case Property:
+		return "Property"
+	case Comparison:
+		return "Comparison"
+	default:
+		return "Unknown"
+	}
+}
+
+func (nt NodeType) MarshalText() ([]byte, error) {
+	return []byte(nt.String()), nil
+}
