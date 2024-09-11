@@ -23,22 +23,7 @@ func NewTokenPatternMatcher() *TokenPatternMatcher {
 
 // compileRegexes compiles regular expressions and stores them in the map
 func (tpm *TokenPatternMatcher) compileRegexes() {
-	tokenTypeRegexMap := map[tokens.TokenType]string{
-		tokens.COMMENT:       `^#(.+)?`,
-		tokens.WORD:          `^(?:\w+:)?\w+(?:\.\w+)*`,
-		tokens.QUOTED_STRING: `^"(.*?)"`,
-		tokens.NUMBER:        `^-?\d+([.,]\d+)?`,
-		tokens.BOOL:          `^(yes|no)`,
-		tokens.NEXTLINE:      `^\n+`,
-		tokens.EQUALS:        `^==?`,
-		tokens.START:         `^{`,
-		tokens.END:           `^}`,
-		tokens.WHITESPACE:    `^ +`,
-		tokens.TAB:           `^\t+`,
-		tokens.COMPARISON:    `^[\<\>]=?`,
-	}
-
-	for tokenType, regexPattern := range tokenTypeRegexMap {
+	for tokenType, regexPattern := range tokens.TokenTypeRegexMap {
 		regex, err := regexp.Compile(regexPattern)
 		if err != nil {
 			log.Fatalf("Failed to compile regex for TokenType %s: %v", tokenType, err)

@@ -17,6 +17,37 @@ const (
 	COMPARISON
 )
 
+var TokenTypeRegexMap = map[TokenType]string{
+	COMMENT:       `^#(.+)?`,
+	WORD:          `^(?:\w+:)?\w+(?:\.\w+)*`,
+	QUOTED_STRING: `^"(.*?)"`,
+	NUMBER:        `^-?\d+([.,]\d+)?`,
+	BOOL:          `^(yes|no)`,
+	NEXTLINE:      `^\n+`,
+	EQUALS:        `^==?`,
+	START:         `^{`,
+	END:           `^}`,
+	WHITESPACE:    `^ +`,
+	TAB:           `^\t+`,
+	COMPARISON:    `^[\<\>]=?`,
+}
+
+// TokenCheckOrder defines the order in which tokens should be checked
+var TokenCheckOrder = []TokenType{
+	WHITESPACE,
+	TAB,
+	NEXTLINE,
+	COMPARISON,
+	COMMENT,
+	QUOTED_STRING,
+	BOOL,
+	NUMBER,
+	WORD,
+	EQUALS,
+	START,
+	END,
+}
+
 func (tt TokenType) String() string {
 	switch tt {
 	case COMMENT:
@@ -50,20 +81,4 @@ func (tt TokenType) String() string {
 
 func (tt TokenType) MarshalText() ([]byte, error) {
 	return []byte(tt.String()), nil
-}
-
-// TokenCheckOrder defines the order in which tokens should be checked
-var TokenCheckOrder = []TokenType{
-	WHITESPACE,
-	TAB,
-	NEXTLINE,
-	COMPARISON,
-	COMMENT,
-	QUOTED_STRING,
-	BOOL,
-	NUMBER,
-	WORD,
-	EQUALS,
-	START,
-	END,
 }
