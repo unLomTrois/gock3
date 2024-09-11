@@ -48,6 +48,10 @@ func (tt TokenType) String() string {
 	}
 }
 
+func (tt TokenType) MarshalText() ([]byte, error) {
+	return []byte(tt.String()), nil
+}
+
 // TokenCheckOrder defines the order in which tokens should be checked
 var TokenCheckOrder = []TokenType{
 	WHITESPACE,
