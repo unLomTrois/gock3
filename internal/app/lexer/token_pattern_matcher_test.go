@@ -2,36 +2,55 @@ package lexer
 
 import (
 	"reflect"
+	"regexp"
 	"testing"
 )
 
 func TestNewTokenPatternMatcher(t *testing.T) {
-	tests := []struct {
-		name string
-		want *TokenPatternMatcher
-	}{
-		// TODO: Add test cases.
+	tpm := NewTokenPatternMatcher()
+
+	if tpm == nil {
+		t.Errorf("NewTokenPatternMatcher() returned nil")
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewTokenPatternMatcher(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewTokenPatternMatcher() = %v, want %v", got, tt.want)
-			}
-		})
+
+	if len(tpm.compiledRegexMap) == 0 {
+		t.Errorf("NewTokenPatternMatcher() did not compile any regexes")
+	}
+
+	// Check if all expected token types are present
+	expectedTokenTypes := []TokenType{
+		COMMENT, SCRIPT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
+		EQUALS, START, END, WHITESPACE, TAB, COMPARISON,
+	}
+
+	for _, tokenType := range expectedTokenTypes {
+		if _, exists := tpm.compiledRegexMap[tokenType]; !exists {
+			t.Errorf("NewTokenPatternMatcher() did not compile regex for TokenType %v", tokenType)
+		}
 	}
 }
 
 func TestTokenPatternMatcher_compileRegexes(t *testing.T) {
-	tests := []struct {
-		name string
-		tpm  *TokenPatternMatcher
-	}{
-		// TODO: Add test cases.
+	tpm := &TokenPatternMatcher{
+		compiledRegexMap: make(map[TokenType]*regexp.Regexp),
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.tpm.compileRegexes()
-		})
+
+	tpm.compileRegexes()
+
+	if len(tpm.compiledRegexMap) == 0 {
+		t.Errorf("compileRegexes() did not compile any regexes")
+	}
+
+	// Check if all expected token types are present
+	expectedTokenTypes := []TokenType{
+		COMMENT, SCRIPT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
+		EQUALS, START, END, WHITESPACE, TAB, COMPARISON,
+	}
+
+	for _, tokenType := range expectedTokenTypes {
+		if _, exists := tpm.compiledRegexMap[tokenType]; !exists {
+			t.Errorf("compileRegexes() did not compile regex for TokenType %v", tokenType)
+		}
 	}
 }
 
@@ -51,10 +70,16 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 			want:      []byte("# This is a comment"),
 		},
 		{
-			name:      "Match SCRIPT token",
+			name:      "Match SCRIPT token - trigger",
 			tokenType: SCRIPT,
-			text:      []byte("scripted_trigger"),
+			text:      []byte("scripted_trigger some_name = { }"),
 			want:      []byte("scripted_trigger"),
+		},
+		{
+			name:      "Match SCRIPT token - effect",
+			tokenType: SCRIPT,
+			text:      []byte("scripted_effect some_name = { }"),
+			want:      []byte("scripted_effect"),
 		},
 		{
 			name:      "Match WORD token",
@@ -63,10 +88,16 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 			want:      []byte("key"),
 		},
 		{
-			name:      "Match hard WORD token",
+			name:      "Match WORD token with scope",
 			tokenType: WORD,
-			text:      []byte("key_1.2 = value"),
-			want:      []byte("key_1.2"),
+			text:      []byte("scope:character = value"),
+			want:      []byte("scope:character"),
+		},
+		{
+			name:      "Match WORD token with dot notation",
+			tokenType: WORD,
+			text:      []byte("key.subkey = value"),
+			want:      []byte("key.subkey"),
 		},
 		{
 			name:      "Match STRING token",
@@ -75,16 +106,88 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 			want:      []byte(`"This is a string"`),
 		},
 		{
-			name:      "yes BOOL token",
+			name:      "Match NUMBER token - integer",
+			tokenType: NUMBER,
+			text:      []byte("123 not a number"),
+			want:      []byte("123"),
+		},
+		{
+			name:      "Match NUMBER token - float",
+			tokenType: NUMBER,
+			text:      []byte("123.45 not a number"),
+			want:      []byte("123.45"),
+		},
+		{
+			name:      "Match NUMBER token - negative",
+			tokenType: NUMBER,
+			text:      []byte("-123 not a number"),
+			want:      []byte("-123"),
+		},
+		{
+			name:      "Match BOOL token - yes",
 			tokenType: BOOL,
-			text:      []byte("yes\nno"),
+			text:      []byte("yes no"),
 			want:      []byte("yes"),
 		},
 		{
-			name:      "no BOOL token",
+			name:      "Match BOOL token - no",
 			tokenType: BOOL,
-			text:      []byte("no\nyes"),
+			text:      []byte("no yes"),
 			want:      []byte("no"),
+		},
+		{
+			name:      "Match NEXTLINE token",
+			tokenType: NEXTLINE,
+			text:      []byte("\n\nNext line"),
+			want:      []byte("\n\n"),
+		},
+		{
+			name:      "Match EQUALS token - single",
+			tokenType: EQUALS,
+			text:      []byte("= value"),
+			want:      []byte("="),
+		},
+		{
+			name:      "Match EQUALS token - double",
+			tokenType: EQUALS,
+			text:      []byte("== value"),
+			want:      []byte("=="),
+		},
+		{
+			name:      "Match START token",
+			tokenType: START,
+			text:      []byte("{ key = value }"),
+			want:      []byte("{"),
+		},
+		{
+			name:      "Match END token",
+			tokenType: END,
+			text:      []byte("} next"),
+			want:      []byte("}"),
+		},
+		{
+			name:      "Match WHITESPACE token",
+			tokenType: WHITESPACE,
+			text:      []byte("   next"),
+			want:      []byte("   "),
+		},
+		{
+			name:      "Match TAB token",
+			tokenType: TAB,
+			text:      []byte("\t\tnext"),
+			want:      []byte("\t\t"),
+		},
+		{
+			name:      "Match COMPARISON token - less than",
+			tokenType: COMPARISON,
+			text:      []byte("< 5"),
+			want:      []byte("<"),
+		},
+		{
+			name:      "Match COMPARISON token - greater than or equal",
+			tokenType: COMPARISON,
+			text:      []byte(">= 10"),
+			want:      []byte(">="),
 		},
 	}
 
