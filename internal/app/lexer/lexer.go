@@ -55,8 +55,8 @@ func (l *Lexer) hasMoreTokens() bool {
 }
 
 // Scan tokenizes the entire input text
-func (l *Lexer) Scan() (*TokenStream, error) {
-	tokenStream := NewTokenStream()
+func (l *Lexer) Scan() (*tokens.TokenStream, error) {
+	tokenStream := tokens.NewTokenStream()
 
 	for l.hasMoreTokens() {
 		token, err := l.getNextToken()

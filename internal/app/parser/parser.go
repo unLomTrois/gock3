@@ -1,18 +1,17 @@
 package parser
 
 import (
-	"ck3-parser/internal/app/lexer"
 	"ck3-parser/internal/app/tokens"
 	"fmt"
 	"strconv"
 )
 
 type Parser struct {
-	tokenstream *lexer.TokenStream
+	tokenstream *tokens.TokenStream
 	lookahead   *tokens.Token
 }
 
-func New(tokenstream *lexer.TokenStream) *Parser {
+func New(tokenstream *tokens.TokenStream) *Parser {
 	return &Parser{
 		tokenstream: tokenstream,
 		lookahead:   nil,

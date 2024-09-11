@@ -1,26 +1,24 @@
-package lexer
-
-import "ck3-parser/internal/app/tokens"
+package tokens
 
 type TokenStream struct {
-	Stream []*tokens.Token
+	Stream []*Token
 	Cursor int
 }
 
 func NewTokenStream() *TokenStream {
 	return &TokenStream{
-		Stream: []*tokens.Token{},
+		Stream: []*Token{},
 		Cursor: 0,
 	}
 }
 
-func (ts *TokenStream) Push(token *tokens.Token) *TokenStream {
+func (ts *TokenStream) Push(token *Token) *TokenStream {
 	ts.Stream = append(ts.Stream, token)
 
 	return ts
 }
 
-func (ts *TokenStream) Next() *tokens.Token {
+func (ts *TokenStream) Next() *Token {
 	if ts.Cursor >= len(ts.Stream) {
 		return nil
 	}

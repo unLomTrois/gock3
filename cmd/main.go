@@ -4,6 +4,7 @@ import (
 	"ck3-parser/internal/app/lexer"
 	"ck3-parser/internal/app/linter"
 	"ck3-parser/internal/app/parser"
+	"ck3-parser/internal/app/tokens"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -73,7 +74,7 @@ func readFile(path string) ([]byte, error) {
 	return io.ReadAll(file)
 }
 
-func scanContent(content []byte) (*lexer.TokenStream, error) {
+func scanContent(content []byte) (*tokens.TokenStream, error) {
 	start := time.Now()
 	defer func() {
 		log.Printf("Scan time: %s", time.Since(start))
@@ -88,7 +89,7 @@ func scanContent(content []byte) (*lexer.TokenStream, error) {
 	return tokenStream, nil
 }
 
-func parseTokens(tokens *lexer.TokenStream) ([]*parser.Node, error) {
+func parseTokens(tokens *tokens.TokenStream) ([]*parser.Node, error) {
 	start := time.Now()
 	defer func() {
 		log.Printf("Parse time: %s", time.Since(start))
