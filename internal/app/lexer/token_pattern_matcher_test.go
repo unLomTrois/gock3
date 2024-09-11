@@ -84,9 +84,9 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 		},
 		{
 			name:      "Match STRING token",
-			tokenType: tokens.STRING,
-			text:      []byte(`"This is a string"\nAnd this is not`),
-			want:      []byte(`"This is a string"`),
+			tokenType: tokens.QUOTED_STRING,
+			text:      []byte(`"This is a quoted string"\nAnd this is not`),
+			want:      []byte(`"This is a quoted string"`),
 		},
 		{
 			name:      "Match NUMBER token - integer",

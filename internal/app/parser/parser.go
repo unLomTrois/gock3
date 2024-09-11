@@ -75,7 +75,7 @@ func (p *Parser) ExpressionNode() *Node {
 	}
 
 	switch p.lookahead.Type {
-	case tokens.WORD, tokens.STRING, tokens.NUMBER, tokens.BOOL:
+	case tokens.WORD, tokens.QUOTED_STRING, tokens.NUMBER, tokens.BOOL:
 		value := p.Literal()
 		node := &Node{
 			Type:  nodetype,
@@ -107,7 +107,7 @@ func (p *Parser) Literal() *Literal {
 		return p.WordLiteral()
 	case tokens.NUMBER:
 		return p.NumberLiteral()
-	case tokens.STRING:
+	case tokens.QUOTED_STRING:
 		return p.StringLiteral()
 	case tokens.BOOL:
 		return p.BoolLiteral()
@@ -147,7 +147,7 @@ func (p *Parser) BoolLiteral() *Literal {
 }
 
 func (p *Parser) StringLiteral() *Literal {
-	token := p.Expect(tokens.STRING)
+	token := p.Expect(tokens.QUOTED_STRING)
 	return &Literal{
 		Type:  StringLiteral,
 		Value: token.Value,

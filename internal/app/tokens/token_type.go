@@ -5,7 +5,7 @@ type TokenType uint8
 const (
 	COMMENT TokenType = iota
 	WORD
-	STRING
+	QUOTED_STRING
 	NUMBER
 	BOOL
 	NEXTLINE
@@ -23,8 +23,8 @@ func (tt TokenType) String() string {
 		return "COMMENT"
 	case WORD:
 		return "WORD"
-	case STRING:
-		return "STRING"
+	case QUOTED_STRING:
+		return "QUOTED_STRING"
 	case NUMBER:
 		return "NUMBER"
 	case BOOL:
@@ -59,7 +59,7 @@ var TokenCheckOrder = []TokenType{
 	NEXTLINE,
 	COMPARISON,
 	COMMENT,
-	STRING,
+	QUOTED_STRING,
 	BOOL,
 	NUMBER,
 	WORD,

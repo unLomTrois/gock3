@@ -24,18 +24,18 @@ func NewTokenPatternMatcher() *TokenPatternMatcher {
 // compileRegexes compiles regular expressions and stores them in the map
 func (tpm *TokenPatternMatcher) compileRegexes() {
 	tokenTypeRegexMap := map[tokens.TokenType]string{
-		tokens.COMMENT:    `^#(.+)?`,
-		tokens.WORD:       `^(?:\w+:)?\w+(?:\.\w+)*`,
-		tokens.STRING:     `^"(.*?)"`,
-		tokens.NUMBER:     `^-?\d+([.,]\d+)?`,
-		tokens.BOOL:       `^(yes|no)`,
-		tokens.NEXTLINE:   `^\n+`,
-		tokens.EQUALS:     `^==?`,
-		tokens.START:      `^{`,
-		tokens.END:        `^}`,
-		tokens.WHITESPACE: `^ +`,
-		tokens.TAB:        `^\t+`,
-		tokens.COMPARISON: `^[\<\>]=?`,
+		tokens.COMMENT:       `^#(.+)?`,
+		tokens.WORD:          `^(?:\w+:)?\w+(?:\.\w+)*`,
+		tokens.QUOTED_STRING: `^"(.*?)"`,
+		tokens.NUMBER:        `^-?\d+([.,]\d+)?`,
+		tokens.BOOL:          `^(yes|no)`,
+		tokens.NEXTLINE:      `^\n+`,
+		tokens.EQUALS:        `^==?`,
+		tokens.START:         `^{`,
+		tokens.END:           `^}`,
+		tokens.WHITESPACE:    `^ +`,
+		tokens.TAB:           `^\t+`,
+		tokens.COMPARISON:    `^[\<\>]=?`,
 	}
 
 	for tokenType, regexPattern := range tokenTypeRegexMap {
