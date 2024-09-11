@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-var elementary = `
+const (
+	elementary = `
 namespace = cooking
 
 entity = {
@@ -13,92 +14,68 @@ entity = {
 }
 `
 
-var scripted_trigger = `
+	scriptedTrigger = `
 scripted_trigger cooking_trigger = {
   condition1 = yes
   condition2 = no
 }
 `
+)
 
 func TestLexer_GetNextToken(t *testing.T) {
-	rawtext := []byte(elementary)
-
-	lexer := NewLexer(rawtext)
+	lexer := NewLexer([]byte(elementary))
 
 	tests := []struct {
-		name       string
-		want       *Token
-		wantErr    bool
-		posteffect func()
-		skipnext   bool
+		name     string
+		want     *Token
+		wantErr  bool
+		skipNext bool
 	}{
 		{
 			name: "Namespace is WORD",
-			want: &Token{
-				Type:  WORD,
-				Value: "namespace",
-			},
-		}, {
+			want: &Token{Type: WORD, Value: "namespace"},
+		},
+		{
 			name: "= is EQUAL",
-			want: &Token{
-				Type:  EQUALS,
-				Value: "=",
-			},
+			want: &Token{Type: EQUALS, Value: "="},
 		},
 		{
 			name: "cooking is WORD",
-			want: &Token{
-				Type:  WORD,
-				Value: "cooking",
-			},
+			want: &Token{Type: WORD, Value: "cooking"},
 		},
 		{
-			name: "entity is WORD",
-			want: &Token{
-				Type:  WORD,
-				Value: "entity",
-			},
-			skipnext: true,
+			name:     "entity is WORD",
+			want:     &Token{Type: WORD, Value: "entity"},
+			skipNext: true,
 		},
 		{
 			name: "{ is START",
-			want: &Token{
-				Type:  START,
-				Value: "{",
-			},
+			want: &Token{Type: START, Value: "{"},
 		},
 		{
-			name: "scope:kek is WORD",
-			want: &Token{
-				Type:  WORD,
-				Value: "scope:character",
-			},
-			skipnext: true,
+			name:     "scope:character is WORD",
+			want:     &Token{Type: WORD, Value: "scope:character"},
+			skipNext: true,
 		},
 		{
-			name: "character.123 is WORD",
-			want: &Token{
-				Type:  WORD,
-				Value: "character.123",
-			},
-			skipnext: true,
+			name:     "character.123 is WORD",
+			want:     &Token{Type: WORD, Value: "character.123"},
+			skipNext: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := lexer.getNextToken()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Lexer.GetNextToken() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Lexer.getNextToken() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got = %v, want %v", got, tt.want)
+				t.Errorf("Lexer.getNextToken() = %v, want %v", got, tt.want)
 			}
-			if tt.posteffect != nil {
-				tt.posteffect()
-			}
-			if tt.skipnext {
-				lexer.getNextToken()
+			if tt.skipNext {
+				_, _ = lexer.getNextToken() // Ignore errors for skipped tokens
 			}
 		})
 	}
@@ -107,13 +84,13 @@ func TestLexer_GetNextToken(t *testing.T) {
 func TestLexer_Scan(t *testing.T) {
 	tests := []struct {
 		name    string
-		example []byte
+		input   string
 		want    []*Token
 		wantErr bool
 	}{
 		{
-			name:    "elementary is tokenized correctly",
-			example: []byte(elementary),
+			name:  "Elementary is tokenized correctly",
+			input: elementary,
 			want: []*Token{
 				{Type: WORD, Value: "namespace"},
 				{Type: EQUALS, Value: "="},
@@ -126,11 +103,10 @@ func TestLexer_Scan(t *testing.T) {
 				{Type: WORD, Value: "character.123"},
 				{Type: END, Value: "}"},
 			},
-			wantErr: false,
 		},
 		{
-			name:    "elementary is tokenized correctly",
-			example: []byte(scripted_trigger),
+			name:  "Scripted trigger is tokenized correctly",
+			input: scriptedTrigger,
 			want: []*Token{
 				{Type: SCRIPT, Value: "scripted_trigger"},
 				{Type: WORD, Value: "cooking_trigger"},
@@ -144,19 +120,20 @@ func TestLexer_Scan(t *testing.T) {
 				{Type: BOOL, Value: "no"},
 				{Type: END, Value: "}"},
 			},
-			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
-		lexer := NewLexer(tt.example)
 		t.Run(tt.name, func(t *testing.T) {
+			lexer := NewLexer([]byte(tt.input))
+
 			got, err := lexer.Scan()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Lexer.Scan() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got.Stream, tt.want) {
-				t.Errorf("Lexer.Scan() = %v, \nwant %v", got, tt.want)
+				t.Errorf("Lexer.Scan() =\ngot:  %v\nwant: %v", got.Stream, tt.want)
 			}
 		})
 	}
