@@ -16,6 +16,6 @@ func (l *Literal) String() string {
 	case NumberLiteral:
 		return fmt.Sprintf("%g", l.Value.(float64))
 	default:
-		panic("Unknown literal type:" + l.Type)
+		panic("Unknown literal type:" + l.Type.String())
 	}
 }
