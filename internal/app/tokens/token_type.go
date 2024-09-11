@@ -1,22 +1,52 @@
 package tokens
 
-type TokenType string
+type TokenType int
 
-// Grouping constants for better readability
 const (
-	COMMENT    TokenType = "COMMENT"
-	WORD       TokenType = "WORD"
-	STRING     TokenType = "STRING"
-	NUMBER     TokenType = "NUMBER"
-	BOOL       TokenType = "BOOL"
-	NEXTLINE   TokenType = "NEXTLINE"
-	EQUALS     TokenType = "EQUALS"
-	START      TokenType = "START"
-	END        TokenType = "END"
-	WHITESPACE TokenType = "WHITESPACE"
-	TAB        TokenType = "TAB"
-	COMPARISON TokenType = "COMPARISON"
+	COMMENT TokenType = iota
+	WORD
+	STRING
+	NUMBER
+	BOOL
+	NEXTLINE
+	EQUALS
+	START
+	END
+	WHITESPACE
+	TAB
+	COMPARISON
 )
+
+func (tt TokenType) String() string {
+	switch tt {
+	case COMMENT:
+		return "COMMENT"
+	case WORD:
+		return "WORD"
+	case STRING:
+		return "STRING"
+	case NUMBER:
+		return "NUMBER"
+	case BOOL:
+		return "BOOL"
+	case NEXTLINE:
+		return "NEXTLINE"
+	case EQUALS:
+		return "EQUALS"
+	case START:
+		return "START"
+	case END:
+		return "END"
+	case WHITESPACE:
+		return "WHITESPACE"
+	case TAB:
+		return "TAB"
+	case COMPARISON:
+		return "COMPARISON"
+	default:
+		return "UNKNOWN"
+	}
+}
 
 // TokenCheckOrder defines the order in which tokens should be checked
 var TokenCheckOrder = []TokenType{
