@@ -43,7 +43,7 @@ func run() error {
 		return fmt.Errorf("scanning content: %w", err)
 	}
 
-	if err := saveJSON(tokenStream, "token_stream.json"); err != nil {
+	if err := saveJSON(tokenStream.Stream, "token_stream.json"); err != nil {
 		return fmt.Errorf("saving tokens: %w", err)
 	}
 
