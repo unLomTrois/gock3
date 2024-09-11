@@ -3,7 +3,6 @@ package parser
 import (
 	"ck3-parser/internal/app/tokens"
 	"fmt"
-	"strconv"
 )
 
 type Parser struct {
@@ -127,14 +126,9 @@ func (p *Parser) WordLiteral() *Literal {
 
 func (p *Parser) NumberLiteral() *Literal {
 	token := p.Expect(tokens.NUMBER)
-	value, err := strconv.ParseFloat(token.Value, 32)
-	if err != nil {
-		panic(err)
-	}
-
 	return &Literal{
 		Type:  NumberLiteral,
-		Value: value,
+		Value: token.Value,
 	}
 }
 

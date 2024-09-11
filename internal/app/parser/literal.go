@@ -1,9 +1,5 @@
 package parser
 
-import (
-	"fmt"
-)
-
 type Literal struct {
 	Type  LiteralType `json:"type"`
 	Value interface{} `json:"value"`
@@ -11,10 +7,8 @@ type Literal struct {
 
 func (l *Literal) String() string {
 	switch l.Type {
-	case StringLiteral, CommentLiteral, WordLiteral, BoolLiteral:
+	case StringLiteral, CommentLiteral, WordLiteral, BoolLiteral, NumberLiteral:
 		return l.Value.(string)
-	case NumberLiteral:
-		return fmt.Sprintf("%g", l.Value.(float64))
 	default:
 		panic("Unknown literal type:" + l.Type.String())
 	}
