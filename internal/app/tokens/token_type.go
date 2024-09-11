@@ -1,6 +1,6 @@
 package tokens
 
-type TokenType int
+type TokenType uint8
 
 const (
 	COMMENT TokenType = iota
