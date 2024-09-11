@@ -4,16 +4,6 @@ import (
 	"fmt"
 )
 
-type LiteralType string
-
-const (
-	NumberLiteral  LiteralType = "NumberLiteral"
-	BoolLiteral    LiteralType = "BoolLiteral"
-	StringLiteral  LiteralType = "StringLiteral"
-	WordLiteral    LiteralType = "WordLiteral"
-	CommentLiteral LiteralType = "CommentLiteral"
-)
-
 type Literal struct {
 	Type  LiteralType `json:"type"`
 	Value interface{} `json:"value"`
