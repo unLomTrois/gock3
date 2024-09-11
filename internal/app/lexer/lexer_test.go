@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"ck3-parser/internal/app/tokens"
 	"reflect"
 	"testing"
 )
@@ -20,39 +21,39 @@ func TestLexer_GetNextToken(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		want     *Token
+		want     *tokens.Token
 		wantErr  bool
 		skipNext bool
 	}{
 		{
 			name: "Namespace is WORD",
-			want: &Token{Type: WORD, Value: "namespace"},
+			want: &tokens.Token{Type: tokens.WORD, Value: "namespace"},
 		},
 		{
 			name: "= is EQUAL",
-			want: &Token{Type: EQUALS, Value: "="},
+			want: &tokens.Token{Type: tokens.EQUALS, Value: "="},
 		},
 		{
 			name: "cooking is WORD",
-			want: &Token{Type: WORD, Value: "cooking"},
+			want: &tokens.Token{Type: tokens.WORD, Value: "cooking"},
 		},
 		{
 			name:     "entity is WORD",
-			want:     &Token{Type: WORD, Value: "entity"},
+			want:     &tokens.Token{Type: tokens.WORD, Value: "entity"},
 			skipNext: true,
 		},
 		{
 			name: "{ is START",
-			want: &Token{Type: START, Value: "{"},
+			want: &tokens.Token{Type: tokens.START, Value: "{"},
 		},
 		{
 			name:     "scope:character is WORD",
-			want:     &Token{Type: WORD, Value: "scope:character"},
+			want:     &tokens.Token{Type: tokens.WORD, Value: "scope:character"},
 			skipNext: true,
 		},
 		{
 			name:     "character.123 is WORD",
-			want:     &Token{Type: WORD, Value: "character.123"},
+			want:     &tokens.Token{Type: tokens.WORD, Value: "character.123"},
 			skipNext: true,
 		},
 	}
@@ -78,23 +79,23 @@ func TestLexer_Scan(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
-		want    []*Token
+		want    []*tokens.Token
 		wantErr bool
 	}{
 		{
 			name:  "Elementary is tokenized correctly",
 			input: elementary,
-			want: []*Token{
-				{Type: WORD, Value: "namespace"},
-				{Type: EQUALS, Value: "="},
-				{Type: WORD, Value: "cooking"},
-				{Type: WORD, Value: "entity"},
-				{Type: EQUALS, Value: "="},
-				{Type: START, Value: "{"},
-				{Type: WORD, Value: "scope:character"},
-				{Type: EQUALS, Value: "="},
-				{Type: WORD, Value: "character.123"},
-				{Type: END, Value: "}"},
+			want: []*tokens.Token{
+				{Type: tokens.WORD, Value: "namespace"},
+				{Type: tokens.EQUALS, Value: "="},
+				{Type: tokens.WORD, Value: "cooking"},
+				{Type: tokens.WORD, Value: "entity"},
+				{Type: tokens.EQUALS, Value: "="},
+				{Type: tokens.START, Value: "{"},
+				{Type: tokens.WORD, Value: "scope:character"},
+				{Type: tokens.EQUALS, Value: "="},
+				{Type: tokens.WORD, Value: "character.123"},
+				{Type: tokens.END, Value: "}"},
 			},
 		},
 	}

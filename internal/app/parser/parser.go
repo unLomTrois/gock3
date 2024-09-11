@@ -2,13 +2,14 @@ package parser
 
 import (
 	"ck3-parser/internal/app/lexer"
+	"ck3-parser/internal/app/tokens"
 	"fmt"
 	"strconv"
 )
 
 type Parser struct {
 	tokenstream *lexer.TokenStream
-	lookahead   *lexer.Token
+	lookahead   *tokens.Token
 }
 
 func New(tokenstream *lexer.TokenStream) *Parser {
@@ -24,7 +25,7 @@ func (p *Parser) Parse() []*Node {
 	return p.List()
 }
 
-func (p *Parser) List(stop_lookahead ...lexer.TokenType) []*Node {
+func (p *Parser) List(stop_lookahead ...tokens.TokenType) []*Node {
 	nodes := make([]*Node, 0)
 
 	for {
@@ -45,7 +46,7 @@ func (p *Parser) List(stop_lookahead ...lexer.TokenType) []*Node {
 func (p *Parser) Node() *Node {
 
 	switch p.lookahead.Type {
-	case lexer.COMMENT:
+	case tokens.COMMENT:
 		return p.CommentNode()
 	default:
 		return p.ExpressionNode()
@@ -53,7 +54,7 @@ func (p *Parser) Node() *Node {
 }
 
 func (p *Parser) CommentNode() *Node {
-	token := p.Expect(lexer.COMMENT)
+	token := p.Expect(tokens.COMMENT)
 	return &Node{
 		Type:  Comment,
 		Value: token.Value,
@@ -64,18 +65,18 @@ func (p *Parser) ExpressionNode() *Node {
 	key := p.Literal()
 
 	var nodetype NodeType
-	var operator *lexer.Token
+	var operator *tokens.Token
 	switch p.lookahead.Type {
-	case lexer.EQUALS:
-		operator = p.Expect(lexer.EQUALS)
+	case tokens.EQUALS:
+		operator = p.Expect(tokens.EQUALS)
 		nodetype = Property
-	case lexer.COMPARISON:
-		operator = p.Expect(lexer.COMPARISON)
+	case tokens.COMPARISON:
+		operator = p.Expect(tokens.COMPARISON)
 		nodetype = Comparison
 	}
 
 	switch p.lookahead.Type {
-	case lexer.WORD, lexer.STRING, lexer.NUMBER, lexer.BOOL:
+	case tokens.WORD, tokens.STRING, tokens.NUMBER, tokens.BOOL:
 		value := p.Literal()
 		node := &Node{
 			Type:  nodetype,
@@ -86,10 +87,10 @@ func (p *Parser) ExpressionNode() *Node {
 			node.Operator = operator.Value
 		}
 		return node
-	case lexer.START:
-		p.Expect(lexer.START)
-		value := p.List(lexer.END)
-		p.Expect(lexer.END)
+	case tokens.START:
+		p.Expect(tokens.START)
+		value := p.List(tokens.END)
+		p.Expect(tokens.END)
 
 		return &Node{
 			Type:  Block,
@@ -103,13 +104,13 @@ func (p *Parser) ExpressionNode() *Node {
 
 func (p *Parser) Literal() *Literal {
 	switch p.lookahead.Type {
-	case lexer.WORD:
+	case tokens.WORD:
 		return p.WordLiteral()
-	case lexer.NUMBER:
+	case tokens.NUMBER:
 		return p.NumberLiteral()
-	case lexer.STRING:
+	case tokens.STRING:
 		return p.StringLiteral()
-	case lexer.BOOL:
+	case tokens.BOOL:
 		return p.BoolLiteral()
 	default:
 		panic(fmt.Sprintf("[Parser] Unexpected Literal: %q, with type of: %s",
@@ -118,7 +119,7 @@ func (p *Parser) Literal() *Literal {
 }
 
 func (p *Parser) WordLiteral() *Literal {
-	token := p.Expect(lexer.WORD)
+	token := p.Expect(tokens.WORD)
 	return &Literal{
 		Type:  WordLiteral,
 		Value: token.Value,
@@ -126,7 +127,7 @@ func (p *Parser) WordLiteral() *Literal {
 }
 
 func (p *Parser) NumberLiteral() *Literal {
-	token := p.Expect(lexer.NUMBER)
+	token := p.Expect(tokens.NUMBER)
 	value, err := strconv.ParseFloat(token.Value, 32)
 	if err != nil {
 		panic(err)
@@ -139,7 +140,7 @@ func (p *Parser) NumberLiteral() *Literal {
 }
 
 func (p *Parser) BoolLiteral() *Literal {
-	token := p.Expect(lexer.BOOL)
+	token := p.Expect(tokens.BOOL)
 	return &Literal{
 		Type:  BoolLiteral,
 		Value: token.Value,
@@ -147,7 +148,7 @@ func (p *Parser) BoolLiteral() *Literal {
 }
 
 func (p *Parser) StringLiteral() *Literal {
-	token := p.Expect(lexer.STRING)
+	token := p.Expect(tokens.STRING)
 	return &Literal{
 		Type:  StringLiteral,
 		Value: token.Value,
@@ -155,7 +156,7 @@ func (p *Parser) StringLiteral() *Literal {
 }
 
 // checks if the next token is the expected type and returns it
-func (p *Parser) Expect(expectedtype lexer.TokenType) *lexer.Token {
+func (p *Parser) Expect(expectedtype tokens.TokenType) *tokens.Token {
 	token := p.lookahead
 
 	if token == nil {

@@ -4,6 +4,7 @@ package lexer
 import (
 	"bufio"
 	"bytes"
+	"ck3-parser/internal/app/tokens"
 	"fmt"
 	"os"
 	"regexp"
@@ -70,10 +71,10 @@ func (l *Lexer) Scan() (*TokenStream, error) {
 	return tokenStream, nil
 }
 
-func (l *Lexer) getNextToken() (*Token, error) {
+func (l *Lexer) getNextToken() (*tokens.Token, error) {
 	l.text = l.text[l.cursor:]
 
-	for _, tokenType := range tokenCheckOrder {
+	for _, tokenType := range tokens.TokenCheckOrder {
 		match := l.patternMatcher.MatchToken(tokenType, l.text)
 		if match == nil {
 			continue
@@ -82,13 +83,13 @@ func (l *Lexer) getNextToken() (*Token, error) {
 		l.cursor = len(match)
 
 		switch tokenType {
-		case WHITESPACE, TAB:
+		case tokens.WHITESPACE, tokens.TAB:
 			return l.getNextToken()
-		case NEXTLINE:
+		case tokens.NEXTLINE:
 			l.line++
 			return l.getNextToken()
 		default:
-			return &Token{
+			return &tokens.Token{
 				Type:  tokenType,
 				Value: string(match),
 			}, nil

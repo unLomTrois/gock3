@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"ck3-parser/internal/app/tokens"
 	"reflect"
 	"regexp"
 	"testing"
@@ -18,10 +19,7 @@ func TestNewTokenPatternMatcher(t *testing.T) {
 	}
 
 	// Check if all expected token types are present
-	expectedTokenTypes := []TokenType{
-		COMMENT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
-		EQUALS, START, END, WHITESPACE, TAB, COMPARISON,
-	}
+	expectedTokenTypes := tokens.TokenCheckOrder
 
 	for _, tokenType := range expectedTokenTypes {
 		if _, exists := tpm.compiledRegexMap[tokenType]; !exists {
@@ -32,7 +30,7 @@ func TestNewTokenPatternMatcher(t *testing.T) {
 
 func TestTokenPatternMatcher_compileRegexes(t *testing.T) {
 	tpm := &TokenPatternMatcher{
-		compiledRegexMap: make(map[TokenType]*regexp.Regexp),
+		compiledRegexMap: make(map[tokens.TokenType]*regexp.Regexp),
 	}
 
 	tpm.compileRegexes()
@@ -42,10 +40,7 @@ func TestTokenPatternMatcher_compileRegexes(t *testing.T) {
 	}
 
 	// Check if all expected token types are present
-	expectedTokenTypes := []TokenType{
-		COMMENT, WORD, STRING, NUMBER, BOOL, NEXTLINE,
-		EQUALS, START, END, WHITESPACE, TAB, COMPARISON,
-	}
+	expectedTokenTypes := tokens.TokenCheckOrder
 
 	for _, tokenType := range expectedTokenTypes {
 		if _, exists := tpm.compiledRegexMap[tokenType]; !exists {
@@ -59,121 +54,121 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		tokenType TokenType
+		tokenType tokens.TokenType
 		text      []byte
 		want      []byte
 	}{
 		{
 			name:      "Match COMMENT token",
-			tokenType: COMMENT,
+			tokenType: tokens.COMMENT,
 			text:      []byte("# This is a comment\nAnd this is not!"),
 			want:      []byte("# This is a comment"),
 		},
 		{
 			name:      "Match WORD token",
-			tokenType: WORD,
+			tokenType: tokens.WORD,
 			text:      []byte("key = value"),
 			want:      []byte("key"),
 		},
 		{
 			name:      "Match WORD token with scope",
-			tokenType: WORD,
+			tokenType: tokens.WORD,
 			text:      []byte("scope:character = value"),
 			want:      []byte("scope:character"),
 		},
 		{
 			name:      "Match WORD token with dot notation",
-			tokenType: WORD,
+			tokenType: tokens.WORD,
 			text:      []byte("key.subkey = value"),
 			want:      []byte("key.subkey"),
 		},
 		{
 			name:      "Match STRING token",
-			tokenType: STRING,
+			tokenType: tokens.STRING,
 			text:      []byte(`"This is a string"\nAnd this is not`),
 			want:      []byte(`"This is a string"`),
 		},
 		{
 			name:      "Match NUMBER token - integer",
-			tokenType: NUMBER,
+			tokenType: tokens.NUMBER,
 			text:      []byte("123 not a number"),
 			want:      []byte("123"),
 		},
 		{
 			name:      "Match NUMBER token - float",
-			tokenType: NUMBER,
+			tokenType: tokens.NUMBER,
 			text:      []byte("123.45 not a number"),
 			want:      []byte("123.45"),
 		},
 		{
 			name:      "Match NUMBER token - negative",
-			tokenType: NUMBER,
+			tokenType: tokens.NUMBER,
 			text:      []byte("-123 not a number"),
 			want:      []byte("-123"),
 		},
 		{
 			name:      "Match BOOL token - yes",
-			tokenType: BOOL,
+			tokenType: tokens.BOOL,
 			text:      []byte("yes no"),
 			want:      []byte("yes"),
 		},
 		{
 			name:      "Match BOOL token - no",
-			tokenType: BOOL,
+			tokenType: tokens.BOOL,
 			text:      []byte("no yes"),
 			want:      []byte("no"),
 		},
 		{
 			name:      "Match NEXTLINE token",
-			tokenType: NEXTLINE,
+			tokenType: tokens.NEXTLINE,
 			text:      []byte("\n\nNext line"),
 			want:      []byte("\n\n"),
 		},
 		{
 			name:      "Match EQUALS token - single",
-			tokenType: EQUALS,
+			tokenType: tokens.EQUALS,
 			text:      []byte("= value"),
 			want:      []byte("="),
 		},
 		{
 			name:      "Match EQUALS token - double",
-			tokenType: EQUALS,
+			tokenType: tokens.EQUALS,
 			text:      []byte("== value"),
 			want:      []byte("=="),
 		},
 		{
 			name:      "Match START token",
-			tokenType: START,
+			tokenType: tokens.START,
 			text:      []byte("{ key = value }"),
 			want:      []byte("{"),
 		},
 		{
 			name:      "Match END token",
-			tokenType: END,
+			tokenType: tokens.END,
 			text:      []byte("} next"),
 			want:      []byte("}"),
 		},
 		{
 			name:      "Match WHITESPACE token",
-			tokenType: WHITESPACE,
+			tokenType: tokens.WHITESPACE,
 			text:      []byte("   next"),
 			want:      []byte("   "),
 		},
 		{
 			name:      "Match TAB token",
-			tokenType: TAB,
+			tokenType: tokens.TAB,
 			text:      []byte("\t\tnext"),
 			want:      []byte("\t\t"),
 		},
 		{
 			name:      "Match COMPARISON token - less than",
-			tokenType: COMPARISON,
+			tokenType: tokens.COMPARISON,
 			text:      []byte("< 5"),
 			want:      []byte("<"),
 		},
 		{
 			name:      "Match COMPARISON token - greater than or equal",
-			tokenType: COMPARISON,
+			tokenType: tokens.COMPARISON,
 			text:      []byte(">= 10"),
 			want:      []byte(">="),
 		},

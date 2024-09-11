@@ -1,4 +1,4 @@
-package lexer
+package tokens
 
 type TokenType string
 
@@ -19,7 +19,7 @@ const (
 )
 
 // TokenCheckOrder defines the order in which tokens should be checked
-var tokenCheckOrder = []TokenType{
+var TokenCheckOrder = []TokenType{
 	WHITESPACE,
 	TAB,
 	NEXTLINE,
