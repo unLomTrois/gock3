@@ -19,7 +19,7 @@ const (
 
 var TokenTypeRegexMap = map[TokenType]string{
 	COMMENT:       `^#(.+)?`,
-	WORD:          `^(?:\w+:)?\w+(?:\.\w+)*`,
+	WORD:          `^(?:[\w-]+:)?[\w.-]+`,
 	QUOTED_STRING: `^"(.*?)"`,
 	NUMBER:        `^-?\d+([.,]\d+)?`,
 	BOOL:          `^(yes|no)`,
