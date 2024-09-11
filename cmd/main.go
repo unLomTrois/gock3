@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	inputFilePath = "data/0_elementary.txt"
-	outputDir     = "tmp"
-	parseTreeFile = "parsetree.json"
-	lintedFile    = "linted.txt"
+	inputFilePath   = "data/3_traits.txt"
+	outputDir       = "tmp"
+	tokenStreamFile = "token_stream.json"
+	parseTreeFile   = "parsetree.json"
+	lintedFile      = "linted.txt"
 )
 
 func main() {
@@ -43,7 +44,7 @@ func run() error {
 		return fmt.Errorf("scanning content: %w", err)
 	}
 
-	if err := saveJSON(tokenStream.Stream, "token_stream.json"); err != nil {
+	if err := saveJSON(tokenStream.Stream, tokenStreamFile); err != nil {
 		return fmt.Errorf("saving tokens: %w", err)
 	}
 

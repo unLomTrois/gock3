@@ -1,0 +1,60 @@
+@pos_compat_high = 30
+@pos_compat_medium = 15
+@pos_compat_low = 5
+
+@neg_compat_high = -30
+@neg_compat_medium = -15
+@neg_compat_low = -5
+
+# INTRIGUE OUTCOMES
+education_intrigue_1 = {
+	minimum_age = 16
+	intrigue = 2
+	category = education
+	monthly_intrigue_lifestyle_xp_gain_mult = 0.1
+	
+	ruler_designer_cost = 0
+	
+	culture_modifier = {
+		parameter = poorly_educated_leaders_distrusted
+		feudal_government_opinion = -10
+	}
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					NOT = { exists = this }
+				}
+				desc = trait_education_intrigue_1_desc
+			}
+			desc = trait_education_intrigue_1_character_desc
+		}
+	}
+
+	group = education_intrigue
+	level = 1
+}
+education_intrigue_2 = {
+	minimum_age = 16
+	intrigue = 4
+	category = education
+	monthly_intrigue_lifestyle_xp_gain_mult = 0.2
+	
+	ruler_designer_cost = 20
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					NOT = { exists = this }
+				}
+				desc = trait_education_intrigue_2_desc
+			}
+			desc = trait_education_intrigue_2_character_desc
+		}
+	}
+
+	group = education_intrigue
+	level = 2
+}
