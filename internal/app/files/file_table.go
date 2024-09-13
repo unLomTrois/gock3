@@ -1,8 +1,12 @@
 package files
 
 import (
+	"errors"
 	"sync"
 )
+
+// Error to be returned if the index is out of bounds
+var ErrIndexOutOfBounds = errors.New("index out of bounds")
 
 type PathTableIndex struct {
 	index uint32
@@ -51,6 +55,40 @@ func (pt *pathTable) store(local string, fullpath string) PathTableIndex {
 	idx := PathTableIndex{index: uint32(len(pt.paths))}
 	pt.paths = append(pt.paths, PathTableStore{local: local, fullpath: fullpath})
 	return idx
+}
+
+// Public LookupPath method that calls the private method after getting the singleton instance.
+func (pt *pathTable) LookupPath(index PathTableIndex) (string, error) {
+	return GetPathTableInstance().lookupPath(index)
+}
+
+// Private lookupPath method with RLock and RUnlock for thread-safe read access.
+func (pt *pathTable) lookupPath(index PathTableIndex) (string, error) {
+	pt.mu.RLock()
+	defer pt.mu.RUnlock()
+
+	if index.index >= uint32(len(pt.paths)) {
+		return "", ErrIndexOutOfBounds
+	}
+
+	return pt.paths[index.index].local, nil
+}
+
+// Public LookupFullpath method that calls the private method after getting the singleton instance.
+func (pt *pathTable) LookupFullpath(index PathTableIndex) (string, error) {
+	return GetPathTableInstance().lookupFullpath(index)
+}
+
+// Private lookupFullpath method with RLock and RUnlock for thread-safe read access.
+func (pt *pathTable) lookupFullpath(index PathTableIndex) (string, error) {
+	pt.mu.RLock()
+	defer pt.mu.RUnlock()
+
+	if index.index >= uint32(len(pt.paths)) {
+		return "", ErrIndexOutOfBounds
+	}
+
+	return pt.paths[index.index].fullpath, nil
 }
 
 // ResetPathTable is a helper function to reset the singleton for testing purposes.

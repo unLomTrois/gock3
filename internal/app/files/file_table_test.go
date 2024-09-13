@@ -148,3 +148,113 @@ func Test_pathTable_Store_Concurrent(t *testing.T) {
 		t.Errorf("Concurrent Store failed: expected %d paths, got %d", expectedPaths, len(pt.paths))
 	}
 }
+
+func Test_pathTable_LookupPath(t *testing.T) {
+	resetPathTable()
+
+	// Store some paths for testing.
+	PATHTABLE.Store(filepath.Join("local1", "path"), filepath.Join("full1", "path"))
+	PATHTABLE.Store(filepath.Join("local2", "path"), filepath.Join("full2", "path"))
+
+	type args struct {
+		index PathTableIndex
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "Lookup first local path",
+			args: args{
+				index: PathTableIndex{index: 0},
+			},
+			want:    filepath.Join("local1", "path"),
+			wantErr: false,
+		},
+		{
+			name: "Lookup second local path",
+			args: args{
+				index: PathTableIndex{index: 1},
+			},
+			want:    filepath.Join("local2", "path"),
+			wantErr: false,
+		},
+		{
+			name: "Lookup out of bounds",
+			args: args{
+				index: PathTableIndex{index: 2},
+			},
+			want:    "",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := PATHTABLE.LookupPath(tt.args.index)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PATHTABLE.LookupPath() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("PATHTABLE.LookupPath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_pathTable_LookupFullpath(t *testing.T) {
+	resetPathTable()
+
+	// Store some paths for testing.
+	PATHTABLE.Store(filepath.Join("local1", "path"), filepath.Join("full1", "path"))
+	PATHTABLE.Store(filepath.Join("local2", "path"), filepath.Join("full2", "path"))
+
+	type args struct {
+		index PathTableIndex
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "Lookup first full path",
+			args: args{
+				index: PathTableIndex{index: 0},
+			},
+			want:    filepath.Join("full1", "path"),
+			wantErr: false,
+		},
+		{
+			name: "Lookup second full path",
+			args: args{
+				index: PathTableIndex{index: 1},
+			},
+			want:    filepath.Join("full2", "path"),
+			wantErr: false,
+		},
+		{
+			name: "Lookup out of bounds",
+			args: args{
+				index: PathTableIndex{index: 2},
+			},
+			want:    "",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := PATHTABLE.LookupFullpath(tt.args.index)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("pathTable.LookupFullpath() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("pathTable.LookupFullpath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
