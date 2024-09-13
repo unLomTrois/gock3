@@ -9,7 +9,6 @@ import (
 )
 
 func ParseFile(entry *files.FileEntry) ([]*parser.Node, error) {
-	fmt.Println(entry.FullPath)
 	content, err := os.ReadFile(entry.FullPath())
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)

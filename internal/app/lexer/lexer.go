@@ -7,7 +7,6 @@ import (
 	"ck3-parser/internal/app/tokens"
 	"fmt"
 	"os"
-	"regexp"
 )
 
 type Lexer struct {
@@ -21,15 +20,13 @@ type Lexer struct {
 func NormalizeText(text []byte) []byte {
 	text = bytes.TrimSpace(text)
 	text = bytes.ReplaceAll(text, []byte("\r\n"), []byte("\n"))
-	return regexp.MustCompile(`\n{3,}`).ReplaceAll(text, []byte("\n\n"))
+	return text
 }
 
 // NewLexer creates a new Lexer instance
 func NewLexer(text []byte) *Lexer {
-	normalized := NormalizeText(text)
-
 	return &Lexer{
-		text:           normalized,
+		text:           NormalizeText(text),
 		cursor:         0,
 		line:           1,
 		patternMatcher: NewTokenPatternMatcher(),
