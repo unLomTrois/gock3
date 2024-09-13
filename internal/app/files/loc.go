@@ -8,10 +8,10 @@ import (
 
 // Loc представляет позицию сущности в файле
 type Loc struct {
-	idx    PathTableIndex // Индекс в PathTable
-	line   uint32         // Номер строки (0 означает весь файл)
-	column uint16         // Номер столбца
-	kind   FileKind       // Тип файла
+	idx    PathTableIndex `json:"-"`
+	Line   uint32         `json:"line"`
+	Column uint16         `json:"column"`
+	kind   FileKind       `json:"-"`
 }
 
 // ForFile создает новый Loc для файла
@@ -20,8 +20,8 @@ func ForFile(pathname string, kind FileKind, fullpath string) Loc {
 	return Loc{
 		idx:    idx,
 		kind:   kind,
-		line:   0,
-		column: 0,
+		Line:   0,
+		Column: 0,
 	}
 }
 
@@ -64,8 +64,8 @@ func LocFromFileEntry(entry *FileEntry) (Loc, error) {
 		return Loc{
 			idx:    *entry.PathIdx(),
 			kind:   entry.Kind(),
-			line:   0,
-			column: 0,
+			Line:   1,
+			Column: 1,
 		}, nil
 	} else {
 		err := entry.StoreInPathTable()
@@ -75,8 +75,8 @@ func LocFromFileEntry(entry *FileEntry) (Loc, error) {
 		return Loc{
 			idx:    *entry.PathIdx(),
 			kind:   entry.Kind(),
-			line:   0,
-			column: 0,
+			Line:   1,
+			Column: 1,
 		}, nil
 	}
 }

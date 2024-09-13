@@ -3,11 +3,13 @@ package lexer
 
 import (
 	"bytes"
+	"ck3-parser/internal/app/files"
 	"ck3-parser/internal/app/tokens"
 	"fmt"
 )
 
 type Lexer struct {
+	entry          *files.FileEntry
 	text           []byte
 	cursor         int
 	line           int
@@ -22,8 +24,9 @@ func NormalizeText(text []byte) []byte {
 }
 
 // NewLexer creates a new Lexer instance
-func NewLexer(text []byte) *Lexer {
+func NewLexer(entry *files.FileEntry, text []byte) *Lexer {
 	return &Lexer{
+		entry:          entry,
 		text:           NormalizeText(text),
 		cursor:         0,
 		line:           1,
@@ -31,22 +34,28 @@ func NewLexer(text []byte) *Lexer {
 	}
 }
 
-func (l *Lexer) hasMoreTokens() bool {
-	return l.cursor < len(l.text)
+func (lex *Lexer) hasMoreTokens() bool {
+	return lex.cursor < len(lex.text)
 }
 
 // Scan tokenizes the entire input text
-func Scan(content []byte) (*tokens.TokenStream, error) {
-	lex := NewLexer(content)
+func Scan(entry *files.FileEntry, text []byte) (*tokens.TokenStream, error) {
+	lex := NewLexer(entry, text)
 
 	tokenStream := tokens.NewTokenStream()
 
+	loc, err := files.LocFromFileEntry(entry)
+	if err != nil {
+		return nil, err
+	}
+
 	for lex.hasMoreTokens() {
-		token, err := lex.getNextToken()
+		token, err := lex.getNextToken(&loc)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning tokens: %w", err)
 		}
 		if token != nil {
+			loc.Column += uint16(len(token.Value))
 			tokenStream.Push(token)
 		}
 	}
@@ -54,44 +63,50 @@ func Scan(content []byte) (*tokens.TokenStream, error) {
 	return tokenStream, nil
 }
 
-func (l *Lexer) remainder() []byte {
-	return l.text[l.cursor:]
+func (lex *Lexer) remainder() []byte {
+	return lex.text[lex.cursor:]
 }
 
-func (l *Lexer) getNextToken() (*tokens.Token, error) {
+func (lex *Lexer) getNextToken(loc *files.Loc) (*tokens.Token, error) {
+	remainder := lex.remainder()
+
 	for _, tokenType := range tokens.TokenCheckOrder {
-		match := l.patternMatcher.MatchToken(tokenType, l.remainder())
+		match := lex.patternMatcher.MatchToken(tokenType, remainder)
 		if match == nil {
 			continue
 		}
 
-		l.cursor += len(match)
+		lex.cursor += len(match)
 
 		switch tokenType {
-		case tokens.WHITESPACE, tokens.TAB:
-			return l.getNextToken()
+		case tokens.TAB:
+			// TODO: Consider using a tab width from users editor settings
+			loc.Column += 4
+			return nil, nil
 		case tokens.NEXTLINE:
-			l.line++
-			return l.getNextToken()
+			loc.Line += 1
+			loc.Column = 1
+			lex.line++
+			return nil, nil
+		case tokens.WHITESPACE:
+			loc.Column += 1
+			return nil, nil
 		default:
-			return &tokens.Token{
-				Type:  tokenType,
-				Value: string(match),
-			}, nil
+			return tokens.New(string(match), tokenType, *loc), nil
 		}
 	}
 
-	return nil, fmt.Errorf("unexpected token at position: line %d, col %d: %q", l.line, l.cursor, string(l.text[0]))
+	return nil, fmt.Errorf("unexpected token at position: line %d, col %d: %q", loc.Line, loc.Column, string(lex.text[0]))
 }
 
 // GetContext returns a window of characters around the current cursor position
-func (l *Lexer) GetContext(window int) string {
-	if l.cursor >= len(l.text) {
+func (lex *Lexer) GetContext(window int) string {
+	if lex.cursor >= len(lex.text) {
 		return ""
 	}
-	end := l.cursor + window
-	if end > len(l.text) {
-		end = len(l.text)
+	end := lex.cursor + window
+	if end > len(lex.text) {
+		end = len(lex.text)
 	}
-	return string(l.text[l.cursor:end])
+	return string(lex.text[lex.cursor:end])
 }

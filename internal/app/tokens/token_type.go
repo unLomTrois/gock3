@@ -23,20 +23,20 @@ var TokenTypeRegexMap = map[TokenType]string{
 	QUOTED_STRING: `^"(.*?)"`,
 	NUMBER:        `^-?\d+([.,]\d+)?`,
 	BOOL:          `^(yes|no)`,
-	NEXTLINE:      `^\n+`,
+	NEXTLINE:      `^\n`,
 	EQUALS:        `^==?`,
 	START:         `^{`,
 	END:           `^}`,
-	WHITESPACE:    `^ +`,
-	TAB:           `^\t+`,
+	WHITESPACE:    `^\s`,
+	TAB:           `^\t`,
 	COMPARISON:    `^[\<\>]=?`,
 }
 
 // TokenCheckOrder defines the order in which tokens should be checked
 var TokenCheckOrder = []TokenType{
-	WHITESPACE,
-	TAB,
 	NEXTLINE,
+	TAB,
+	WHITESPACE,
 	COMPARISON,
 	COMMENT,
 	QUOTED_STRING,
