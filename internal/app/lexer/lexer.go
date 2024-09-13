@@ -2,11 +2,9 @@
 package lexer
 
 import (
-	"bufio"
 	"bytes"
 	"ck3-parser/internal/app/tokens"
 	"fmt"
-	"os"
 )
 
 type Lexer struct {
@@ -31,20 +29,6 @@ func NewLexer(text []byte) *Lexer {
 		line:           1,
 		patternMatcher: NewTokenPatternMatcher(),
 	}
-}
-
-func saveNormalizedText(text []byte) error {
-	file, err := os.Create("./tmp/normalized.txt")
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
-	if _, err := writer.Write(text); err != nil {
-		return err
-	}
-	return writer.Flush()
 }
 
 func (l *Lexer) hasMoreTokens() bool {
