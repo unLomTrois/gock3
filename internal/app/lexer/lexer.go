@@ -52,16 +52,18 @@ func (l *Lexer) Scan() (*tokens.TokenStream, error) {
 	return tokenStream, nil
 }
 
-func (l *Lexer) getNextToken() (*tokens.Token, error) {
-	l.text = l.text[l.cursor:]
+func (l *Lexer) remainder() []byte {
+	return l.text[l.cursor:]
+}
 
+func (l *Lexer) getNextToken() (*tokens.Token, error) {
 	for _, tokenType := range tokens.TokenCheckOrder {
-		match := l.patternMatcher.MatchToken(tokenType, l.text)
+		match := l.patternMatcher.MatchToken(tokenType, l.remainder())
 		if match == nil {
 			continue
 		}
 
-		l.cursor = len(match)
+		l.cursor += len(match)
 
 		switch tokenType {
 		case tokens.WHITESPACE, tokens.TAB:
