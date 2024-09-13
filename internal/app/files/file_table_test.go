@@ -258,3 +258,51 @@ func Test_pathTable_LookupFullpath(t *testing.T) {
 		})
 	}
 }
+
+func Test_pathTable_Concurrent_Read(t *testing.T) {
+	// Reset the singleton before the test starts
+	resetPathTable()
+
+	// Store some paths for testing.
+	PATHTABLE.Store(filepath.Join("local1", "path"), filepath.Join("full1", "path"))
+	PATHTABLE.Store(filepath.Join("local2", "path"), filepath.Join("full2", "path"))
+	PATHTABLE.Store(filepath.Join("local3", "path"), filepath.Join("full3", "path"))
+
+	// Number of goroutines to read concurrently
+	numGoroutines := 10
+	var wg sync.WaitGroup
+
+	// Expected values
+	expectedPaths := []string{
+		filepath.Join("local1", "path"),
+		filepath.Join("local2", "path"),
+		filepath.Join("local3", "path"),
+	}
+
+	// Run concurrent readers
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			// Cyclically pick one of the stored indexes (0, 1, or 2)
+			idx := PathTableIndex{index: uint32(i % 3)}
+
+			// Read from the path table
+			localPath, err := PATHTABLE.LookupPath(idx)
+			if err != nil {
+				t.Errorf("Error reading path at index %d: %v", idx.index, err)
+				return
+			}
+
+			// Check that the path read matches the expected path
+			expectedPath := expectedPaths[idx.index]
+			if localPath != expectedPath {
+				t.Errorf("Expected path %v, but got %v", expectedPath, localPath)
+			}
+		}(i)
+	}
+
+	// Wait for all goroutines to complete
+	wg.Wait()
+}
