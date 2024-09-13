@@ -15,8 +15,7 @@ func ParseFile(entry *files.FileEntry) ([]*parser.Node, error) {
 		return nil, fmt.Errorf("reading file: %w", err)
 	}
 
-	l := lexer.NewLexer(content)
-	token_stream, err := l.Scan()
+	token_stream, err := lexer.Scan(content)
 	if err != nil {
 		return nil, err
 	}
