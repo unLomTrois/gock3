@@ -26,7 +26,7 @@ type FileEntry struct {
 
 // NewFileEntry is the constructor for FileEntry.
 // Ensures the path is valid and not empty.
-func NewFileEntry(path string, kind FileKind, fullpath string) *FileEntry {
+func NewFileEntry(path string, fullpath string, kind FileKind) *FileEntry {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		panic("Invalid path: path does not exist")
 	}

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"ck3-parser/internal/app/lexer"
+	"ck3-parser/internal/app/files"
 	"ck3-parser/internal/app/linter"
 	"ck3-parser/internal/app/parser"
-	"ck3-parser/internal/app/tokens"
-	"encoding/json"
+	"ck3-parser/internal/app/pdxfile"
+	"ck3-parser/internal/app/utils"
 	"fmt"
 	"log"
 	"os"
@@ -33,27 +33,23 @@ func run() error {
 		log.Printf("Total execution time: %s", time.Since(start))
 	}()
 
-	// Read the input file
-	content, err := os.ReadFile(inputFilePath)
+	path := inputFilePath
+	fullpath, err := filepath.Abs(path)
 	if err != nil {
-		return fmt.Errorf("reading file: %w", err)
+		return fmt.Errorf("getting absolute path: %w", err)
 	}
+	file_entry := files.NewFileEntry(path, fullpath, files.FileKind(files.Mod))
 
-	tokenStream, err := scanContent(content)
-	if err != nil {
-		return fmt.Errorf("scanning content: %w", err)
-	}
-
-	if err := saveJSON(tokenStream.Stream, tokenStreamFile); err != nil {
-		return fmt.Errorf("saving tokens: %w", err)
-	}
-
-	parseTrees, err := parseTokens(tokenStream)
+	parseTrees, err := pdxfile.ParseFile(file_entry)
 	if err != nil {
 		return fmt.Errorf("parsing tokens: %w", err)
 	}
 
-	if err := saveJSON(parseTrees, parseTreeFile); err != nil {
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return err
+	}
+
+	if err := utils.SaveJSON(parseTrees, filepath.Join(outputDir, parseTreeFile)); err != nil {
 		return fmt.Errorf("saving parse tree: %w", err)
 	}
 
@@ -61,53 +57,6 @@ func run() error {
 		return fmt.Errorf("linting and saving: %w", err)
 	}
 
-	return nil
-}
-
-func scanContent(content []byte) (*tokens.TokenStream, error) {
-	start := time.Now()
-	defer func() {
-		log.Printf("Scan time: %s", time.Since(start))
-	}()
-
-	l := lexer.NewLexer(content)
-	tokenStream, err := l.Scan()
-	if err != nil {
-		return nil, fmt.Errorf("failed to scan content: %w", err)
-	}
-
-	return tokenStream, nil
-}
-
-func parseTokens(tokens *tokens.TokenStream) ([]*parser.Node, error) {
-	start := time.Now()
-	defer func() {
-		log.Printf("Parse time: %s", time.Since(start))
-	}()
-
-	p := parser.New(tokens)
-	return p.Parse(), nil
-}
-
-func saveJSON(data interface{}, filename string) error {
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return err
-	}
-
-	file, err := os.Create(filepath.Join(outputDir, filename))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	enc := json.NewEncoder(file)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "\t")
-	if err := enc.Encode(data); err != nil {
-		return err
-	}
-
-	log.Printf("Saved JSON to %s", filepath.Join(outputDir, filename))
 	return nil
 }
 
