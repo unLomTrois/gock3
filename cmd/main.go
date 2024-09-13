@@ -7,7 +7,6 @@ import (
 	"ck3-parser/internal/app/tokens"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,7 +33,8 @@ func run() error {
 		log.Printf("Total execution time: %s", time.Since(start))
 	}()
 
-	content, err := readFile(inputFilePath)
+	// Read the input file
+	content, err := os.ReadFile(inputFilePath)
 	if err != nil {
 		return fmt.Errorf("reading file: %w", err)
 	}
@@ -62,21 +62,6 @@ func run() error {
 	}
 
 	return nil
-}
-
-func readFile(path string) ([]byte, error) {
-	start := time.Now()
-	defer func() {
-		log.Printf("File read time: %s", time.Since(start))
-	}()
-
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	return io.ReadAll(file)
 }
 
 func scanContent(content []byte) (*tokens.TokenStream, error) {
