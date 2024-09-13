@@ -27,10 +27,12 @@ type pathTable struct {
 	mu    sync.RWMutex
 }
 
+type PathTableStatic struct{}
+
 var (
 	pathTableInstance *pathTable
 	once              sync.Once
-	PATHTABLE         pathTable
+	PATHTABLE         PathTableStatic
 )
 
 func GetPathTableInstance() *pathTable {
@@ -45,7 +47,7 @@ func GetPathTableInstance() *pathTable {
 
 // Store is usually called from PATHTABLE, which is a "static namespace" of the package.
 // Hence public Store method should call GetPathTableInstance to get an actual singleton, and call its private store method
-func (pt *pathTable) Store(local string, fullpath string) PathTableIndex {
+func (PathTableStatic) Store(local string, fullpath string) PathTableIndex {
 	return GetPathTableInstance().store(local, fullpath)
 }
 
@@ -58,7 +60,7 @@ func (pt *pathTable) store(local string, fullpath string) PathTableIndex {
 }
 
 // Public LookupPath method that calls the private method after getting the singleton instance.
-func (pt *pathTable) LookupPath(index PathTableIndex) (string, error) {
+func (PathTableStatic) LookupPath(index PathTableIndex) (string, error) {
 	return GetPathTableInstance().lookupPath(index)
 }
 
@@ -75,7 +77,7 @@ func (pt *pathTable) lookupPath(index PathTableIndex) (string, error) {
 }
 
 // Public LookupFullpath method that calls the private method after getting the singleton instance.
-func (pt *pathTable) LookupFullpath(index PathTableIndex) (string, error) {
+func (PathTableStatic) LookupFullpath(index PathTableIndex) (string, error) {
 	return GetPathTableInstance().lookupFullpath(index)
 }
 
