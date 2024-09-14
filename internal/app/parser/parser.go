@@ -22,10 +22,10 @@ func Parse(token_stream *tokens.TokenStream) []*Node {
 
 	p.lookahead = p.tokenstream.Next()
 
-	return p.Block()
+	return p.Statements()
 }
 
-func (p *Parser) Block(stop_lookahead ...tokens.TokenType) []*Node {
+func (p *Parser) Statements(stop_lookahead ...tokens.TokenType) []*Node {
 	nodes := make([]*Node, 0)
 
 	for p.lookahead != nil {
@@ -38,7 +38,7 @@ func (p *Parser) Block(stop_lookahead ...tokens.TokenType) []*Node {
 			node := p.Node()
 			nodes = append(nodes, node)
 		default:
-			// Если текущий символ не в FIRST(Statement), то это ε-продукция
+			// If the current symbol is not in FIRST(Statement), then it is an ε-production
 		}
 	}
 
@@ -46,62 +46,77 @@ func (p *Parser) Block(stop_lookahead ...tokens.TokenType) []*Node {
 }
 
 func (p *Parser) Node() *Node {
-
 	switch p.lookahead.Type {
 	case tokens.COMMENT:
 		return p.CommentNode()
-	default:
+	case tokens.WORD:
 		return p.ExpressionNode()
+	default:
+		panic(fmt.Sprintf("[Parser] Unexpected Node: %q, with type of: %s",
+			p.lookahead.Value, p.lookahead.Type))
 	}
 }
 
 func (p *Parser) CommentNode() *Node {
 	token := p.Expect(tokens.COMMENT)
 	return &Node{
-		Type:  Comment,
 		Value: token.Value,
 	}
 }
 
 func (p *Parser) ExpressionNode() *Node {
-	key := p.Literal()
+	key := p.Key()
 
-	var nodetype NodeType
-	var operator *tokens.Token
-	switch p.lookahead.Type {
-	case tokens.EQUALS:
-		operator = p.Expect(tokens.EQUALS)
-		nodetype = Property
-	case tokens.COMPARISON:
-		operator = p.Expect(tokens.COMPARISON)
-		nodetype = Comparison
+	operator, err := p.Operator()
+	if err != nil {
+		panic(err)
 	}
 
+	value, err := p.Value()
+	if err != nil {
+		panic(err)
+	}
+
+	return &Node{
+		Key:      key,
+		Operator: operator.Value,
+		Value:    value,
+	}
+}
+
+func (p *Parser) Key() *Literal {
+	if p.lookahead.Type == tokens.WORD {
+		return p.WordLiteral()
+	} else {
+		panic(fmt.Sprintf("expected key (WORD), got %s", p.lookahead.Type))
+	}
+}
+
+func (p *Parser) Operator() (*tokens.Token, error) {
 	switch p.lookahead.Type {
-	case tokens.WORD, tokens.QUOTED_STRING, tokens.NUMBER, tokens.BOOL:
-		value := p.Literal()
-		node := &Node{
-			Type:  nodetype,
-			Key:   key,
-			Value: value,
-		}
-		if nodetype == Comparison {
-			node.Operator = operator.Value
-		}
-		return node
+	case tokens.EQUALS, tokens.COMPARISON:
+		return p.Expect(p.lookahead.Type), nil
+	default:
+		return nil, fmt.Errorf("expected operator '=', '==', or comparison, got %s", p.lookahead.Type)
+	}
+}
+
+func (p *Parser) Value() (interface{}, error) {
+	switch p.lookahead.Type {
+	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL:
+		return p.Literal(), nil
 	case tokens.START:
-		p.Expect(tokens.START)
-		value := p.Block(tokens.END)
-		p.Expect(tokens.END)
-
-		return &Node{
-			Type:  Block,
-			Key:   key,
-			Value: value,
-		}
+		return p.Block()
+	default:
+		return nil, fmt.Errorf("unexpected token %s in Value", p.lookahead.Type)
 	}
+}
 
-	return nil
+func (p *Parser) Block() ([]*Node, error) {
+	p.Expect(tokens.START)
+	nodes := p.Statements(tokens.END)
+	p.Expect(tokens.END)
+	return nodes, nil
 }
 
 func (p *Parser) Literal() *Literal {
