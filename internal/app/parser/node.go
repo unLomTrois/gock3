@@ -1,19 +1,13 @@
 package parser
 
+import "ck3-parser/internal/app/tokens"
+
 type Node struct {
-	Key      *Literal    `json:"key,omitempty"`
-	Operator string      `json:"operator,omitempty"`
-	Value    interface{} `json:"value,omitempty"`
+	Key      *tokens.Token `json:"key,omitempty"`
+	Operator *tokens.Token `json:"operator,omitempty"`
+	Value    interface{}   `json:"value,omitempty"`
 }
 
 func (n *Node) Node() *Node {
 	return n.Value.(*Node)
-}
-
-func (n *Node) KeyLiteral() []byte {
-	return []byte(n.Key.String())
-}
-
-func (n *Node) DataLiteral() []byte {
-	return []byte(n.Value.(*Literal).String())
 }

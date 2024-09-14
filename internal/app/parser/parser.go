@@ -60,7 +60,7 @@ func (p *Parser) Node() *Node {
 func (p *Parser) CommentNode() *Node {
 	token := p.Expect(tokens.COMMENT)
 	return &Node{
-		Value: token.Value,
+		Value: token,
 	}
 }
 
@@ -79,17 +79,13 @@ func (p *Parser) ExpressionNode() *Node {
 
 	return &Node{
 		Key:      key,
-		Operator: operator.Value,
+		Operator: operator,
 		Value:    value,
 	}
 }
 
-func (p *Parser) Key() *Literal {
-	if p.lookahead.Type == tokens.WORD {
-		return p.WordLiteral()
-	} else {
-		panic(fmt.Sprintf("expected key (WORD), got %s", p.lookahead.Type))
-	}
+func (p *Parser) Key() *tokens.Token {
+	return p.Expect(tokens.WORD)
 }
 
 func (p *Parser) Operator() (*tokens.Token, error) {
@@ -119,44 +115,24 @@ func (p *Parser) Block() ([]*Node, error) {
 	return nodes, nil
 }
 
-func (p *Parser) Literal() *Literal {
+func (p *Parser) Literal() *tokens.Token {
 	switch p.lookahead.Type {
 	case tokens.WORD:
-		return p.WordLiteral()
+		return p.Expect(tokens.WORD)
 	case tokens.NUMBER:
-		return p.NumberLiteral()
+		return p.Expect(tokens.NUMBER)
 	case tokens.QUOTED_STRING:
-		return p.StringLiteral()
+		return p.Expect(tokens.QUOTED_STRING)
 	case tokens.BOOL:
-		return p.BoolLiteral()
+		return p.Expect(tokens.BOOL)
 	default:
 		panic(fmt.Sprintf("[Parser] Unexpected Literal: %q, with type of: %s",
 			p.lookahead.Value, p.lookahead.Type))
 	}
 }
 
-func (p *Parser) WordLiteral() *Literal {
-	token := p.Expect(tokens.WORD)
-	return &Literal{
-		Type:  WordLiteral,
-		Value: token.Value,
-	}
-}
-
-func (p *Parser) NumberLiteral() *Literal {
-	token := p.Expect(tokens.NUMBER)
-	return &Literal{
-		Type:  NumberLiteral,
-		Value: token.Value,
-	}
-}
-
-func (p *Parser) BoolLiteral() *Literal {
-	token := p.Expect(tokens.BOOL)
-	return &Literal{
-		Type:  BoolLiteral,
-		Value: token.Value,
-	}
+func (p *Parser) WordLiteral() *tokens.Token {
+	return p.Expect(tokens.WORD)
 }
 
 func (p *Parser) StringLiteral() *Literal {
