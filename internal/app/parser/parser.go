@@ -17,13 +17,15 @@ func New(tokenstream *tokens.TokenStream) *Parser {
 	}
 }
 
-func (p *Parser) Parse() []*Node {
+func Parse(token_stream *tokens.TokenStream) []*Node {
+	p := New(token_stream)
+
 	p.lookahead = p.tokenstream.Next()
 
-	return p.List()
+	return p.Block()
 }
 
-func (p *Parser) List(stop_lookahead ...tokens.TokenType) []*Node {
+func (p *Parser) Block(stop_lookahead ...tokens.TokenType) []*Node {
 	nodes := make([]*Node, 0)
 
 	for {
@@ -87,7 +89,7 @@ func (p *Parser) ExpressionNode() *Node {
 		return node
 	case tokens.START:
 		p.Expect(tokens.START)
-		value := p.List(tokens.END)
+		value := p.Block(tokens.END)
 		p.Expect(tokens.END)
 
 		return &Node{

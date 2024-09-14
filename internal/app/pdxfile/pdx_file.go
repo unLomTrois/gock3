@@ -22,8 +22,7 @@ func ParseFile(entry *files.FileEntry) ([]*parser.Node, error) {
 
 	utils.SaveJSON(token_stream.Stream, "tmp/token_stream.json")
 
-	p := parser.New(token_stream)
-	parse_tree := p.Parse()
+	parse_tree := parser.Parse(token_stream)
 	// todo: err here
 
 	return parse_tree, nil
