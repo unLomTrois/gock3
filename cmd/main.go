@@ -2,8 +2,6 @@ package main
 
 import (
 	"ck3-parser/internal/app/files"
-	"ck3-parser/internal/app/linter"
-	"ck3-parser/internal/app/parser"
 	"ck3-parser/internal/app/pdxfile"
 	"ck3-parser/internal/app/utils"
 	"fmt"
@@ -53,30 +51,5 @@ func run() error {
 		return fmt.Errorf("saving parse tree: %w", err)
 	}
 
-	if err := lintAndSave(parseTrees); err != nil {
-		return fmt.Errorf("linting and saving: %w", err)
-	}
-
-	return nil
-}
-
-func lintAndSave(parseTrees []*parser.Node) error {
-	config := linter.LintConfig{
-		IntendStyle:            linter.TABS,
-		IntendSize:             4,
-		TrimTrailingWhitespace: true,
-		InsertFinalNewline:     true,
-		CharSet:                "utf-8-bom",
-		EndOfLine:              []byte("\r\n"),
-	}
-
-	l := linter.New(parseTrees, config)
-	l.Lint()
-
-	if err := l.Save(filepath.Join(outputDir, lintedFile)); err != nil {
-		return err
-	}
-
-	log.Printf("Linted file saved to %s", filepath.Join(outputDir, lintedFile))
 	return nil
 }

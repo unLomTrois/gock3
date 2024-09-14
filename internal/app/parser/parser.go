@@ -28,16 +28,18 @@ func Parse(token_stream *tokens.TokenStream) []*Node {
 func (p *Parser) Block(stop_lookahead ...tokens.TokenType) []*Node {
 	nodes := make([]*Node, 0)
 
-	for {
-		if p.lookahead == nil {
-			break
-		}
+	for p.lookahead != nil {
 		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
 			break
 		}
 
-		new_node := p.Node()
-		nodes = append(nodes, new_node)
+		switch p.lookahead.Type {
+		case tokens.COMMENT, tokens.WORD:
+			node := p.Node()
+			nodes = append(nodes, node)
+		default:
+			// Если текущий символ не в FIRST(Statement), то это ε-продукция
+		}
 	}
 
 	return nodes
