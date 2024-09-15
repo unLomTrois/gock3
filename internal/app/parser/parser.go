@@ -131,18 +131,6 @@ func (p *Parser) Literal() *tokens.Token {
 	}
 }
 
-func (p *Parser) WordLiteral() *tokens.Token {
-	return p.Expect(tokens.WORD)
-}
-
-func (p *Parser) StringLiteral() *Literal {
-	token := p.Expect(tokens.QUOTED_STRING)
-	return &Literal{
-		Type:  StringLiteral,
-		Value: token.Value,
-	}
-}
-
 // checks if the next token is the expected type and returns it
 func (p *Parser) Expect(expectedtype tokens.TokenType) *tokens.Token {
 	token := p.lookahead
