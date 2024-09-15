@@ -7,7 +7,3 @@ type Node struct {
 	Operator *tokens.Token `json:"operator,omitempty"`
 	Value    interface{}   `json:"value,omitempty"`
 }
-
-func (n *Node) Node() *Node {
-	return n.Value.(*Node)
-}
