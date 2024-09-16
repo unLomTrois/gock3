@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func ParseFile(entry *files.FileEntry) ([]*parser.Node, error) {
+func ParseFile(entry *files.FileEntry) (*parser.FileBlock, error) {
 	content, err := os.ReadFile(entry.FullPath())
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)

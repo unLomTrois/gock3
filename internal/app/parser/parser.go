@@ -17,16 +17,17 @@ func New(tokenstream *tokens.TokenStream) *Parser {
 	}
 }
 
-func Parse(token_stream *tokens.TokenStream) []*Node {
+func Parse(token_stream *tokens.TokenStream) *FileBlock {
 	p := New(token_stream)
 
 	p.lookahead = p.tokenstream.Next()
 
-	return p.Statements()
+	return &FileBlock{Values: p.Statements()}
+
 }
 
-func (p *Parser) Statements(stop_lookahead ...tokens.TokenType) []*Node {
-	nodes := make([]*Node, 0)
+func (p *Parser) Statements(stop_lookahead ...tokens.TokenType) []*Field {
+	nodes := make([]*Field, 0)
 
 	for p.lookahead != nil {
 		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
@@ -34,7 +35,10 @@ func (p *Parser) Statements(stop_lookahead ...tokens.TokenType) []*Node {
 		}
 
 		switch p.lookahead.Type {
-		case tokens.COMMENT, tokens.WORD:
+		case tokens.COMMENT:
+			p.Expect(tokens.COMMENT)
+			continue
+		case tokens.WORD:
 			node := p.Node()
 			nodes = append(nodes, node)
 		default:
@@ -45,10 +49,8 @@ func (p *Parser) Statements(stop_lookahead ...tokens.TokenType) []*Node {
 	return nodes
 }
 
-func (p *Parser) Node() *Node {
+func (p *Parser) Node() *Field {
 	switch p.lookahead.Type {
-	case tokens.COMMENT:
-		return p.CommentNode()
 	case tokens.WORD:
 		return p.ExpressionNode()
 	default:
@@ -57,14 +59,7 @@ func (p *Parser) Node() *Node {
 	}
 }
 
-func (p *Parser) CommentNode() *Node {
-	token := p.Expect(tokens.COMMENT)
-	return &Node{
-		Value: token,
-	}
-}
-
-func (p *Parser) ExpressionNode() *Node {
+func (p *Parser) ExpressionNode() *Field {
 	key := p.Key()
 
 	operator, err := p.Operator()
@@ -77,7 +72,7 @@ func (p *Parser) ExpressionNode() *Node {
 		panic(err)
 	}
 
-	return &Node{
+	return &Field{
 		Key:      key,
 		Operator: operator,
 		Value:    value,
@@ -97,7 +92,7 @@ func (p *Parser) Operator() (*tokens.Token, error) {
 	}
 }
 
-func (p *Parser) Value() (interface{}, error) {
+func (p *Parser) Value() (BV, error) {
 	switch p.lookahead.Type {
 	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL:
 		return p.Literal(), nil
@@ -108,11 +103,11 @@ func (p *Parser) Value() (interface{}, error) {
 	}
 }
 
-func (p *Parser) Block() ([]*Node, error) {
+func (p *Parser) Block() (Block, error) {
 	p.Expect(tokens.START)
 	nodes := p.Statements(tokens.END)
 	p.Expect(tokens.END)
-	return nodes, nil
+	return &FieldBlock{Values: nodes}, nil
 }
 
 func (p *Parser) Literal() *tokens.Token {
