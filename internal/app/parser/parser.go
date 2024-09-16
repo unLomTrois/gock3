@@ -22,11 +22,14 @@ func Parse(token_stream *tokens.TokenStream) *FileBlock {
 
 	p.lookahead = p.tokenstream.Next()
 
-	return &FileBlock{Values: p.Statements()}
-
+	return p.fileBlock()
 }
 
-func (p *Parser) Statements(stop_lookahead ...tokens.TokenType) []*Field {
+func (p *Parser) fileBlock() *FileBlock {
+	return &FileBlock{Values: p.FieldList()}
+}
+
+func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*Field {
 	nodes := make([]*Field, 0)
 
 	for p.lookahead != nil {
@@ -43,6 +46,8 @@ func (p *Parser) Statements(stop_lookahead ...tokens.TokenType) []*Field {
 			nodes = append(nodes, node)
 		default:
 			// If the current symbol is not in FIRST(Statement), then it is an ε-production
+			panic(fmt.Sprintf("[Parser] Unexpected Statement: %q, with type of: %s",
+				p.lookahead.Value, p.lookahead.Type))
 		}
 	}
 
@@ -105,9 +110,49 @@ func (p *Parser) Value() (BV, error) {
 
 func (p *Parser) Block() (Block, error) {
 	p.Expect(tokens.START)
-	nodes := p.Statements(tokens.END)
+
+	switch p.lookahead.Type {
+	case tokens.WORD:
+		return p.FieldBlock(), nil
+	case tokens.NUMBER, tokens.QUOTED_STRING:
+		return p.TokenBlock(), nil
+	default:
+		return nil, fmt.Errorf("unexpected token %s in Block", p.lookahead.Type)
+	}
+}
+
+func (p *Parser) FieldBlock() *FieldBlock {
+	nodes := p.FieldList(tokens.END)
 	p.Expect(tokens.END)
-	return &FieldBlock{Values: nodes}, nil
+	return &FieldBlock{Values: nodes}
+}
+
+func (p *Parser) TokenBlock() *TokenBlock {
+	nodes := p.TokenList(tokens.END)
+	p.Expect(tokens.END)
+	return &TokenBlock{Values: nodes}
+}
+
+func (p *Parser) TokenList(stop_lookahead ...tokens.TokenType) []*tokens.Token {
+	nodes := make([]*tokens.Token, 0)
+
+	for p.lookahead != nil {
+		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
+			break
+		}
+
+		switch p.lookahead.Type {
+		case tokens.NUMBER, tokens.QUOTED_STRING:
+			node := p.Literal()
+			nodes = append(nodes, node)
+		default:
+			// If the current symbol is not in FIRST(Statement), then it is an ε-production
+			panic(fmt.Sprintf("[Parser] Unexpected Statement: %q, with type of: %s",
+				p.lookahead.Value, p.lookahead.Type))
+		}
+	}
+
+	return nodes
 }
 
 func (p *Parser) Literal() *tokens.Token {

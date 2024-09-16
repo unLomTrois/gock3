@@ -8,6 +8,9 @@
 
 # INTRIGUE OUTCOMES
 education_intrigue_1 = {
+	color = { 255 100 0 }
+	based = { "Cringe" }
+
 	minimum_age = 16
 	intrigue = 2
 	category = education
