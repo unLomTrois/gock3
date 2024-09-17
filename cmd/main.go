@@ -31,12 +31,27 @@ func run() error {
 		log.Printf("Total execution time: %s", time.Since(start))
 	}()
 
+	vanilla_root := ""
+	mod_root := ""
+	replace_paths := []string{}
+
+	mod_loader := files.NewModLoader(mod_root, replace_paths)
+
+	fset := files.NewFileSet(vanilla_root, mod_loader)
+
+	traits_dir := "C:/Users/vadim/Documents/Paradox Interactive/Crusader Kings III/mod/T4N-CK3/T4N/common/traits"
+
+	err := fset.Scan(traits_dir)
+	if err != nil {
+		return fmt.Errorf("scanning files: %w", err)
+	}
+
 	path := inputFilePath
 	fullpath, err := filepath.Abs(path)
 	if err != nil {
 		return fmt.Errorf("getting absolute path: %w", err)
 	}
-	file_entry := files.NewFileEntry(path, fullpath, files.FileKind(files.Mod))
+	file_entry := files.NewFileEntry(fullpath, files.FileKind(files.Mod))
 
 	parseTrees, err := pdxfile.ParseFile(file_entry)
 	if err != nil {

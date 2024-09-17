@@ -46,7 +46,6 @@ func Test_pathTable_Store(t *testing.T) {
 		{
 			name: "Store new path",
 			args: args{
-				local:    filepath.Join("local", "path"),
 				fullpath: filepath.Join("full", "path"),
 			},
 			want: PathTableIndex{index: 0}, // Expected index after first insertion
@@ -54,7 +53,6 @@ func Test_pathTable_Store(t *testing.T) {
 		{
 			name: "Store second path",
 			args: args{
-				local:    filepath.Join("local2", "path"),
 				fullpath: filepath.Join("full2", "path"),
 			},
 			want: PathTableIndex{index: 1}, // Expected index after second insertion
@@ -63,7 +61,7 @@ func Test_pathTable_Store(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Use PATHTABLE to store paths, which will call GetPathTableInstance() internally
-			got := PATHTABLE.Store(tt.args.local, tt.args.fullpath)
+			got := PATHTABLE.Store(tt.args.fullpath)
 			if got.index != tt.want.index {
 				t.Errorf("PATHTABLE.Store() = %v, want %v", got, tt.want)
 			}
@@ -88,7 +86,6 @@ func Test_pathTable_store(t *testing.T) {
 			name: "Store new path",
 			pt:   GetPathTableInstance(),
 			args: args{
-				local:    filepath.Join("local", "path"),
 				fullpath: filepath.Join("full", "path"),
 			},
 			want: PathTableIndex{index: 0}, // Expected index after first insertion
@@ -97,7 +94,6 @@ func Test_pathTable_store(t *testing.T) {
 			name: "Store second path",
 			pt:   GetPathTableInstance(),
 			args: args{
-				local:    filepath.Join("local2", "path"),
 				fullpath: filepath.Join("full2", "path"),
 			},
 			want: PathTableIndex{index: 1}, // Expected index after second insertion
@@ -105,7 +101,7 @@ func Test_pathTable_store(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.pt.store(tt.args.local, tt.args.fullpath)
+			got := tt.pt.store(tt.args.fullpath)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("pathTable.store() = %v, want %v", got, tt.want)
 			}
@@ -128,11 +124,10 @@ func Test_pathTable_Store_Concurrent(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 
-			localPath := filepath.Join(fmt.Sprintf("local%d", i), "path")
 			fullPath := filepath.Join(fmt.Sprintf("full%d", i), "path")
 
 			// Use PATHTABLE.Store to store paths concurrently
-			PATHTABLE.Store(localPath, fullPath)
+			PATHTABLE.Store(fullPath)
 		}(i)
 	}
 
@@ -149,67 +144,12 @@ func Test_pathTable_Store_Concurrent(t *testing.T) {
 	}
 }
 
-func Test_pathTable_LookupPath(t *testing.T) {
-	resetPathTable()
-
-	// Store some paths for testing.
-	PATHTABLE.Store(filepath.Join("local1", "path"), filepath.Join("full1", "path"))
-	PATHTABLE.Store(filepath.Join("local2", "path"), filepath.Join("full2", "path"))
-
-	type args struct {
-		index PathTableIndex
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "Lookup first local path",
-			args: args{
-				index: PathTableIndex{index: 0},
-			},
-			want:    filepath.Join("local1", "path"),
-			wantErr: false,
-		},
-		{
-			name: "Lookup second local path",
-			args: args{
-				index: PathTableIndex{index: 1},
-			},
-			want:    filepath.Join("local2", "path"),
-			wantErr: false,
-		},
-		{
-			name: "Lookup out of bounds",
-			args: args{
-				index: PathTableIndex{index: 2},
-			},
-			want:    "",
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := PATHTABLE.LookupPath(tt.args.index)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PATHTABLE.LookupPath() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("PATHTABLE.LookupPath() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_pathTable_LookupFullpath(t *testing.T) {
 	resetPathTable()
 
 	// Store some paths for testing.
-	PATHTABLE.Store(filepath.Join("local1", "path"), filepath.Join("full1", "path"))
-	PATHTABLE.Store(filepath.Join("local2", "path"), filepath.Join("full2", "path"))
+	PATHTABLE.Store(filepath.Join("full1", "path"))
+	PATHTABLE.Store(filepath.Join("full2", "path"))
 
 	type args struct {
 		index PathTableIndex
@@ -264,9 +204,9 @@ func Test_pathTable_Concurrent_Read(t *testing.T) {
 	resetPathTable()
 
 	// Store some paths for testing.
-	PATHTABLE.Store(filepath.Join("local1", "path"), filepath.Join("full1", "path"))
-	PATHTABLE.Store(filepath.Join("local2", "path"), filepath.Join("full2", "path"))
-	PATHTABLE.Store(filepath.Join("local3", "path"), filepath.Join("full3", "path"))
+	PATHTABLE.Store(filepath.Join("full1", "path"))
+	PATHTABLE.Store(filepath.Join("full2", "path"))
+	PATHTABLE.Store(filepath.Join("full3", "path"))
 
 	// Number of goroutines to read concurrently
 	numGoroutines := 10
@@ -274,9 +214,9 @@ func Test_pathTable_Concurrent_Read(t *testing.T) {
 
 	// Expected values
 	expectedPaths := []string{
-		filepath.Join("local1", "path"),
-		filepath.Join("local2", "path"),
-		filepath.Join("local3", "path"),
+		filepath.Join("full1", "path"),
+		filepath.Join("full2", "path"),
+		filepath.Join("full3", "path"),
 	}
 
 	// Run concurrent readers
@@ -289,7 +229,7 @@ func Test_pathTable_Concurrent_Read(t *testing.T) {
 			idx := PathTableIndex{index: uint32(i % 3)}
 
 			// Read from the path table
-			localPath, err := PATHTABLE.LookupPath(idx)
+			localPath, err := PATHTABLE.LookupFullpath(idx)
 			if err != nil {
 				t.Errorf("Error reading path at index %d: %v", idx.index, err)
 				return

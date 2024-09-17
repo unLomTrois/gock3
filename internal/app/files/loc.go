@@ -16,7 +16,7 @@ type Loc struct {
 
 // ForFile создает новый Loc для файла
 func ForFile(pathname string, kind FileKind, fullpath string) Loc {
-	idx := PATHTABLE.Store(pathname, fullpath)
+	idx := PATHTABLE.Store(fullpath)
 	return Loc{
 		idx:    idx,
 		kind:   kind,
@@ -27,7 +27,7 @@ func ForFile(pathname string, kind FileKind, fullpath string) Loc {
 
 // Filename возвращает имя файла из Loc
 func (loc *Loc) Filename() (string, error) {
-	path, err := PATHTABLE.LookupPath(loc.idx)
+	path, err := PATHTABLE.LookupFullpath(loc.idx)
 	if err != nil {
 		return "", err
 	}
@@ -37,7 +37,7 @@ func (loc *Loc) Filename() (string, error) {
 
 // Pathname возвращает относительный путь из Loc
 func (loc *Loc) Pathname() (string, error) {
-	path, err := PATHTABLE.LookupPath(loc.idx)
+	path, err := PATHTABLE.LookupFullpath(loc.idx)
 	if err != nil {
 		return "", err
 	}
