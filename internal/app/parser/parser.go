@@ -30,7 +30,7 @@ func (p *Parser) fileBlock() *FileBlock {
 }
 
 func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*Field {
-	nodes := make([]*Field, 0)
+	fields := make([]*Field, 0)
 
 	for p.lookahead != nil {
 		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
@@ -42,8 +42,11 @@ func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*Field {
 			p.Expect(tokens.COMMENT)
 			continue
 		case tokens.WORD:
-			node := p.Node()
-			nodes = append(nodes, node)
+			field := p.Field()
+			fields = append(fields, field)
+		case tokens.DATE:
+			field := p.Field()
+			fields = append(fields, field)
 		default:
 			// If the current symbol is not in FIRST(Statement), then it is an ε-production
 			panic(fmt.Sprintf("[Parser] Unexpected Statement: %q, with type of: %s",
@@ -51,12 +54,12 @@ func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*Field {
 		}
 	}
 
-	return nodes
+	return fields
 }
 
-func (p *Parser) Node() *Field {
+func (p *Parser) Field() *Field {
 	switch p.lookahead.Type {
-	case tokens.WORD:
+	case tokens.WORD, tokens.DATE:
 		return p.ExpressionNode()
 	default:
 		panic(fmt.Sprintf("[Parser] Unexpected Node: %q, with type of: %s",
@@ -85,7 +88,15 @@ func (p *Parser) ExpressionNode() *Field {
 }
 
 func (p *Parser) Key() *tokens.Token {
-	return p.Expect(tokens.WORD)
+	switch p.lookahead.Type {
+	case tokens.WORD:
+		return p.Expect(tokens.WORD)
+	case tokens.DATE:
+		return p.Expect(tokens.DATE)
+	default:
+		panic(fmt.Sprintf("[Parser] Unexpected Key: %q, with type of: %s",
+			p.lookahead.Value, p.lookahead.Type))
+	}
 }
 
 func (p *Parser) Operator() (*tokens.Token, error) {
@@ -112,6 +123,9 @@ func (p *Parser) Block() (Block, error) {
 	p.Expect(tokens.START)
 
 	switch p.lookahead.Type {
+	case tokens.COMMENT:
+		p.Expect(tokens.COMMENT)
+		fallthrough
 	case tokens.WORD:
 		return p.FieldBlock(), nil
 	case tokens.NUMBER, tokens.QUOTED_STRING:

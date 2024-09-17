@@ -1,0 +1,36 @@
+Moriya_1 = {
+    name = name_Isamu
+    culture = kyoshu_capital_culture
+    faith = kyoshu_spirituality
+    dynasty = dynasty_moriya #Moriya
+    
+    trait = education_stewardship_4
+    trait = patient
+    trait = paranoid
+    trait = just
+    trait = firebender
+    trait = administrator
+
+    disallow_random_traits = yes
+    sexuality = heterosexual
+
+    205.1.1 = {
+        birth = yes
+		effect = {
+			set_sexuality = heterosexual
+            add_trait_xp = {
+				trait = firebender
+				track = firebender
+                value = 25
+			}
+		}
+    }
+    230.1.1 = {
+        capital = c_taki
+        change_government = taki_special_government
+	}
+
+    258.1.1 = {
+        death = yes
+    }
+}

@@ -1,0 +1,28 @@
+option = { # Option title
+	name = stewardship_domain_special.1424.a
+	trigger_event = { # Makes another event happen
+		id = yearly.1012 # The event ID is the thing at the top (so stewardship_domain.6017 is valid, as is any other event, so long as it exists).
+		days = { 7 14 } # Get random number between two values (unknown wether it is inclusive or exclusive), anything that takes = {X Y} can also just work as = X
+	}
+
+	hidden_effect = { # Hides stuff from showing up on the tooltip of the option
+		scope:county = { # Gets the location stored in the scope "county"
+			add_county_modifier = { # To add modifiers (bonuses or penalites)
+				modifier = governance_land_cleared_for_settlement_modifier # https://ck3.paradoxwikis.com/Modifier_list be sure to use one that belongs to the right type (in this case, country).
+				days = 3650 # How long it lasts, you can use days = {X Y} too
+			}
+		}
+	}
+
+	ai_chance = {
+		base = 50 # What are the chances of selecting this option over others? (Does not need to be 0 to 100, it can be anything)
+		modifier = {  # You can change the value based on a variety of things, in this case it is the traits of the AI character
+			add = 15
+			has_trait = sadistic # List of traits can be found at ..\game\common\traits\00_traits.txt
+		}
+		modifier = {
+			add = -40 # To remove something you just add a negative number (5 + -10 = -5)
+			has_trait = compassionate
+		}
+	}
+}

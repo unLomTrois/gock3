@@ -15,6 +15,7 @@ const (
 	WHITESPACE
 	TAB
 	COMPARISON
+	DATE
 )
 
 var TokenTypeRegexMap = map[TokenType]string{
@@ -30,6 +31,7 @@ var TokenTypeRegexMap = map[TokenType]string{
 	WHITESPACE:    `^\s`,
 	TAB:           `^\t`,
 	COMPARISON:    `^[\<\>]=?`,
+	DATE:          `^\d+.\d{1,2}.\d{1,2}`,
 }
 
 // TokenCheckOrder defines the order in which tokens should be checked
@@ -41,6 +43,7 @@ var TokenCheckOrder = []TokenType{
 	COMMENT,
 	QUOTED_STRING,
 	BOOL,
+	DATE,
 	NUMBER,
 	WORD,
 	EQUALS,
@@ -74,6 +77,8 @@ func (tt TokenType) String() string {
 		return "TAB"
 	case COMPARISON:
 		return "COMPARISON"
+	case DATE:
+		return "DATE"
 	default:
 		return "UNKNOWN"
 	}

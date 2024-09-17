@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	inputFilePath   = "data/3_traits.txt"
+	inputFilePath   = "data/5_event.txt"
 	outputDir       = "tmp"
 	tokenStreamFile = "token_stream.json"
 	parseTreeFile   = "parsetree.json"
