@@ -1,3 +1,3 @@
-module github.com/unLomTrois/lexiCK3
+module github.com/unLomTrois/gock3
 
 go 1.23

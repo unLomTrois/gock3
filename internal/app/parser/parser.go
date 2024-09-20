@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/lexer/tokens"
+	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 )
 
 type Parser struct {

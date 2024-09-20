@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/files"
+	"github.com/unLomTrois/gock3/internal/app/files"
 )
 
 type Token struct {

@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/files"
-	"github.com/unLomTrois/lexiCK3/internal/app/lexer/tokens"
+	"github.com/unLomTrois/gock3/internal/app/files"
+	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 )
 
 type Lexer struct {

@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/lexer/tokens"
+	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 )
 
 func TestFileBlock(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/files"
-	"github.com/unLomTrois/lexiCK3/internal/app/pdxfile"
-	"github.com/unLomTrois/lexiCK3/internal/app/utils"
+	"github.com/unLomTrois/gock3/internal/app/files"
+	"github.com/unLomTrois/gock3/internal/app/pdxfile"
+	"github.com/unLomTrois/gock3/internal/app/utils"
 )
 
 const (

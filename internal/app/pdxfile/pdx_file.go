@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/files"
-	"github.com/unLomTrois/lexiCK3/internal/app/lexer"
-	"github.com/unLomTrois/lexiCK3/internal/app/parser"
-	"github.com/unLomTrois/lexiCK3/internal/app/utils"
+	"github.com/unLomTrois/gock3/internal/app/files"
+	"github.com/unLomTrois/gock3/internal/app/lexer"
+	"github.com/unLomTrois/gock3/internal/app/parser"
+	"github.com/unLomTrois/gock3/internal/app/utils"
 )
 
 func ParseFile(entry *files.FileEntry) (*parser.FileBlock, error) {

@@ -1,4 +1,4 @@
-[![Go](https://github.com/unLomTrois/lexiCK3/actions/workflows/go.yml/badge.svg)](https://github.com/unLomTrois/lexiCK3/actions/workflows/go.yml)
+[![Go](https://github.com/unLomTrois/gock3/actions/workflows/go.yml/badge.svg)](https://github.com/unLomTrois/gock3/actions/workflows/go.yml)
 
 # What is this?
 Golang implementation of linting PDXScript files for Crusader Kings 3
@@ -25,11 +25,11 @@ Parser makes AST (Abstract Syntax Tree), catches syntax errors (e.g. not closed 
 
 ### Raw file
 
-![image](https://github.com/unLomTrois/lexiCK3/assets/51882489/1aee3cad-f633-41a9-979d-50b4280541ea)
+![image](https://github.com/unLomTrois/gock3/assets/51882489/1aee3cad-f633-41a9-979d-50b4280541ea)
 
 ## Linted file:
 
-![image](https://github.com/unLomTrois/lexiCK3/assets/51882489/9818b66d-2c2b-483e-bc7b-eb5c64cd7ab3)
+![image](https://github.com/unLomTrois/gock3/assets/51882489/9818b66d-2c2b-483e-bc7b-eb5c64cd7ab3)
 
 
 ## P.S.
