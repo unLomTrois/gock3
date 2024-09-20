@@ -14,8 +14,8 @@ type BV interface {
 }
 
 type Block interface {
+	BV
 	IsBlock()
-	IsBV()
 }
 
 // File Block is a top-level block with a list of fields
