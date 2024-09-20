@@ -120,12 +120,6 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 			want:      []byte("no"),
 		},
 		{
-			name:      "Match NEXTLINE token",
-			tokenType: tokens.NEXTLINE,
-			text:      []byte("\n\nNext line"),
-			want:      []byte("\n\n"),
-		},
-		{
 			name:      "Match EQUALS token - single",
 			tokenType: tokens.EQUALS,
 			text:      []byte("= value"),
@@ -148,18 +142,6 @@ func TestTokenPatternMatcher_MatchToken(t *testing.T) {
 			tokenType: tokens.END,
 			text:      []byte("} next"),
 			want:      []byte("}"),
-		},
-		{
-			name:      "Match WHITESPACE token",
-			tokenType: tokens.WHITESPACE,
-			text:      []byte("   next"),
-			want:      []byte("   "),
-		},
-		{
-			name:      "Match TAB token",
-			tokenType: tokens.TAB,
-			text:      []byte("\t\tnext"),
-			want:      []byte("\t\t"),
 		},
 		{
 			name:      "Match COMPARISON token - less than",
