@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
+	"github.com/unLomTrois/lexiCK3/internal/app/lexer/tokens"
 )
 
 func TestNewTokenPatternMatcher(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/unLomTrois/lexiCK3/internal/app/files"
-	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
+	"github.com/unLomTrois/lexiCK3/internal/app/lexer/tokens"
 )
 
 type Lexer struct {

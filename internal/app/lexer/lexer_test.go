@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
+	"github.com/unLomTrois/lexiCK3/internal/app/lexer/tokens"
 )
 
 const (
