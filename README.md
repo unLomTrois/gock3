@@ -1,3 +1,5 @@
+[![Go](https://github.com/unLomTrois/lexiCK3/actions/workflows/go.yml/badge.svg)](https://github.com/unLomTrois/lexiCK3/actions/workflows/go.yml)
+
 # What is this?
 Golang implementation of linting PDXScript files for Crusader Kings 3
 
