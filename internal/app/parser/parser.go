@@ -1,8 +1,9 @@
 package parser
 
 import (
-	"ck3-parser/internal/app/tokens"
 	"fmt"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
 )
 
 type Parser struct {

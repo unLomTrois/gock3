@@ -1,9 +1,10 @@
 package lexer
 
 import (
-	"ck3-parser/internal/app/tokens"
 	"reflect"
 	"testing"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
 )
 
 const (

@@ -1,6 +1,6 @@
 package parser
 
-import "ck3-parser/internal/app/tokens"
+import "github.com/unLomTrois/lexiCK3/internal/app/tokens"
 
 type Field struct {
 	Key      *tokens.Token `json:"key"`

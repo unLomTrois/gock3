@@ -1,9 +1,10 @@
 package tokens
 
 import (
-	"ck3-parser/internal/app/files"
 	"fmt"
 	"strconv"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/files"
 )
 
 type Token struct {

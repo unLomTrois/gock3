@@ -1,14 +1,15 @@
 package main
 
 import (
-	"ck3-parser/internal/app/files"
-	"ck3-parser/internal/app/pdxfile"
-	"ck3-parser/internal/app/utils"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/files"
+	"github.com/unLomTrois/lexiCK3/internal/app/pdxfile"
+	"github.com/unLomTrois/lexiCK3/internal/app/utils"
 )
 
 const (

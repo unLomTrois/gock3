@@ -3,9 +3,10 @@ package lexer
 
 import (
 	"bytes"
-	"ck3-parser/internal/app/files"
-	"ck3-parser/internal/app/tokens"
 	"fmt"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/files"
+	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
 )
 
 type Lexer struct {

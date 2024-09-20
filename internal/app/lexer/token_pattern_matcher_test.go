@@ -1,10 +1,11 @@
 package lexer
 
 import (
-	"ck3-parser/internal/app/tokens"
 	"reflect"
 	"regexp"
 	"testing"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
 )
 
 func TestNewTokenPatternMatcher(t *testing.T) {

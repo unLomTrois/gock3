@@ -1,12 +1,13 @@
 package pdxfile
 
 import (
-	"ck3-parser/internal/app/files"
-	"ck3-parser/internal/app/lexer"
-	"ck3-parser/internal/app/parser"
-	"ck3-parser/internal/app/utils"
 	"fmt"
 	"os"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/files"
+	"github.com/unLomTrois/lexiCK3/internal/app/lexer"
+	"github.com/unLomTrois/lexiCK3/internal/app/parser"
+	"github.com/unLomTrois/lexiCK3/internal/app/utils"
 )
 
 func ParseFile(entry *files.FileEntry) (*parser.FileBlock, error) {

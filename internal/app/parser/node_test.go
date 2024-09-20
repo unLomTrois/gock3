@@ -1,9 +1,10 @@
 package parser
 
 import (
-	"ck3-parser/internal/app/tokens"
 	"fmt"
 	"testing"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
 )
 
 func TestBlockField__Value(t *testing.T) {

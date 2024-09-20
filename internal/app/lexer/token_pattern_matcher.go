@@ -1,10 +1,11 @@
 package lexer
 
 import (
-	"ck3-parser/internal/app/tokens"
 	"fmt"
 	"log"
 	"regexp"
+
+	"github.com/unLomTrois/lexiCK3/internal/app/tokens"
 )
 
 // TokenPatternMatcher is a structure for working with token regular expressions
