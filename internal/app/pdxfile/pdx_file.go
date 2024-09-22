@@ -10,7 +10,7 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/utils"
 )
 
-func ParseFile(entry *files.FileEntry) (*parser.FileBlock, error) {
+func ParseFile(entry *files.FileEntry) (*parser.AST, error) {
 	content, err := os.ReadFile(entry.FullPath())
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)
@@ -23,8 +23,14 @@ func ParseFile(entry *files.FileEntry) (*parser.FileBlock, error) {
 
 	utils.SaveJSON(token_stream.Stream, "tmp/token_stream.json")
 
-	parse_tree := parser.Parse(token_stream)
+	file_block := parser.Parse(token_stream)
 	// todo: err here
 
-	return parse_tree, nil
+	ast := &parser.AST{
+		Filename: entry.FileName(),
+		Fullpath: entry.FullPath(),
+		Data:     file_block.Values,
+	}
+
+	return ast, nil
 }

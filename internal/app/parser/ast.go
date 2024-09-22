@@ -2,6 +2,12 @@ package parser
 
 import "github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 
+type AST struct {
+	Filename string   `json:"filename"`
+	Fullpath string   `json:"fullpath"`
+	Data     []*Field `json:"data"`
+}
+
 type Field struct {
 	Key      *tokens.Token `json:"key"`
 	Operator *tokens.Token `json:"operator"`

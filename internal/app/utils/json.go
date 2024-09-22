@@ -7,7 +7,6 @@ import (
 )
 
 func SaveJSON(data interface{}, fullpath string) error {
-
 	file, err := os.Create(fullpath)
 	if err != nil {
 		return err

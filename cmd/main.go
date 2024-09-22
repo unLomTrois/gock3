@@ -7,21 +7,43 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/unLomTrois/gock3/internal/app/cli"
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
 	"github.com/unLomTrois/gock3/internal/app/utils"
 )
 
 const (
-	inputFilePath   = "data/5_event.txt"
+	inputFilePath   = "data/3_traits.txt"
 	outputDir       = "tmp"
 	tokenStreamFile = "token_stream.json"
 	parseTreeFile   = "parsetree.json"
 	lintedFile      = "linted.txt"
 )
 
+func root(args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("no subcommand provided")
+	}
+
+	commands := []cli.Command{
+		cli.NewParseCommand(),
+	}
+
+	subcommand := args[1]
+
+	// check if subcommand is valid
+	for _, cmd := range commands {
+		if subcommand == cmd.Name() {
+			return cmd.Run(args[2:])
+		}
+	}
+
+	return fmt.Errorf("unknown subcommand: %s", subcommand)
+}
+
 func main() {
-	if err := run(); err != nil {
+	if err := root(os.Args); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }
