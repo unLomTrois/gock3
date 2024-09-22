@@ -7,10 +7,11 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/lexer"
 	"github.com/unLomTrois/gock3/internal/app/parser"
+	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/internal/app/utils"
 )
 
-func ParseFile(entry *files.FileEntry) (*parser.AST, error) {
+func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
 	content, err := os.ReadFile(entry.FullPath())
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)
@@ -26,7 +27,7 @@ func ParseFile(entry *files.FileEntry) (*parser.AST, error) {
 	file_block := parser.Parse(token_stream)
 	// todo: err here
 
-	ast := &parser.AST{
+	ast := &ast.AST{
 		Filename: entry.FileName(),
 		Fullpath: entry.FullPath(),
 		Data:     file_block.Values,

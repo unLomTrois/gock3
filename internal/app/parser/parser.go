@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
+	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 )
 
 type Parser struct {
@@ -18,7 +19,7 @@ func New(tokenstream *tokens.TokenStream) *Parser {
 	}
 }
 
-func Parse(token_stream *tokens.TokenStream) *FileBlock {
+func Parse(token_stream *tokens.TokenStream) *ast.FileBlock {
 	p := New(token_stream)
 
 	p.lookahead = p.tokenstream.Next()
@@ -26,12 +27,12 @@ func Parse(token_stream *tokens.TokenStream) *FileBlock {
 	return p.fileBlock()
 }
 
-func (p *Parser) fileBlock() *FileBlock {
-	return &FileBlock{Values: p.FieldList()}
+func (p *Parser) fileBlock() *ast.FileBlock {
+	return &ast.FileBlock{Values: p.FieldList()}
 }
 
-func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*Field {
-	fields := make([]*Field, 0)
+func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*ast.Field {
+	fields := make([]*ast.Field, 0)
 
 	for p.lookahead != nil {
 		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
@@ -58,7 +59,7 @@ func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*Field {
 	return fields
 }
 
-func (p *Parser) Field() *Field {
+func (p *Parser) Field() *ast.Field {
 	switch p.lookahead.Type {
 	case tokens.WORD, tokens.DATE:
 		return p.ExpressionNode()
@@ -68,7 +69,7 @@ func (p *Parser) Field() *Field {
 	}
 }
 
-func (p *Parser) ExpressionNode() *Field {
+func (p *Parser) ExpressionNode() *ast.Field {
 	key := p.Key()
 
 	operator, err := p.Operator()
@@ -81,7 +82,7 @@ func (p *Parser) ExpressionNode() *Field {
 		panic(err)
 	}
 
-	return &Field{
+	return &ast.Field{
 		Key:      key,
 		Operator: operator,
 		Value:    value,
@@ -109,7 +110,7 @@ func (p *Parser) Operator() (*tokens.Token, error) {
 	}
 }
 
-func (p *Parser) Value() (BV, error) {
+func (p *Parser) Value() (ast.BV, error) {
 	switch p.lookahead.Type {
 	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL:
 		return p.Literal(), nil
@@ -120,7 +121,7 @@ func (p *Parser) Value() (BV, error) {
 	}
 }
 
-func (p *Parser) Block() (Block, error) {
+func (p *Parser) Block() (ast.Block, error) {
 	p.Expect(tokens.START)
 
 	switch p.lookahead.Type {
@@ -136,16 +137,16 @@ func (p *Parser) Block() (Block, error) {
 	}
 }
 
-func (p *Parser) FieldBlock() *FieldBlock {
+func (p *Parser) FieldBlock() *ast.FieldBlock {
 	nodes := p.FieldList(tokens.END)
 	p.Expect(tokens.END)
-	return &FieldBlock{Values: nodes}
+	return &ast.FieldBlock{Values: nodes}
 }
 
-func (p *Parser) TokenBlock() *TokenBlock {
+func (p *Parser) TokenBlock() *ast.TokenBlock {
 	nodes := p.TokenList(tokens.END)
 	p.Expect(tokens.END)
-	return &TokenBlock{Values: nodes}
+	return &ast.TokenBlock{Values: nodes}
 }
 
 func (p *Parser) TokenList(stop_lookahead ...tokens.TokenType) []*tokens.Token {
