@@ -38,7 +38,6 @@ func (c *ParseCommand) Name() string {
 // args is the list of command line arguments
 // The first argument is the file path
 func (c *ParseCommand) Run(args []string) error {
-	fmt.Println("args", args)
 	if err := c.fs.Parse(args[1:]); err != nil {
 		return err
 	}
