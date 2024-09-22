@@ -8,7 +8,6 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/lexer"
 	"github.com/unLomTrois/gock3/internal/app/parser"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
-	"github.com/unLomTrois/gock3/internal/app/utils"
 )
 
 func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
@@ -21,8 +20,6 @@ func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	utils.SaveJSON(token_stream.Stream, "tmp/token_stream.json")
 
 	file_block := parser.Parse(token_stream)
 	// todo: err here
