@@ -35,7 +35,6 @@ func Test_pathTable_Store(t *testing.T) {
 	resetPathTable()
 
 	type args struct {
-		local    string
 		fullpath string
 	}
 	tests := []struct {
@@ -73,14 +72,13 @@ func Test_pathTable_store(t *testing.T) {
 	resetPathTable()
 
 	type args struct {
-		local    string
 		fullpath string
 	}
 	tests := []struct {
 		name string
 		pt   *pathTable
 		args args
-		want PathTableIndex
+		want *PathTableIndex
 	}{
 		{
 			name: "Store new path",
@@ -88,7 +86,7 @@ func Test_pathTable_store(t *testing.T) {
 			args: args{
 				fullpath: filepath.Join("full", "path"),
 			},
-			want: PathTableIndex{index: 0}, // Expected index after first insertion
+			want: &PathTableIndex{index: 0}, // Expected index after first insertion
 		},
 		{
 			name: "Store second path",
@@ -96,7 +94,7 @@ func Test_pathTable_store(t *testing.T) {
 			args: args{
 				fullpath: filepath.Join("full2", "path"),
 			},
-			want: PathTableIndex{index: 1}, // Expected index after second insertion
+			want: &PathTableIndex{index: 1}, // Expected index after second insertion
 		},
 	}
 	for _, tt := range tests {
