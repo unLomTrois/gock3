@@ -5,7 +5,7 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/pkg/report"
-	"github.com/unLomTrois/gock3/pkg/report/severity"
+	"github.com/unLomTrois/gock3/pkg/validator"
 )
 
 type ModFile struct {
@@ -39,28 +39,31 @@ func NewModFile(AST *ast.AST, file_entry *files.FileEntry) *ModFile {
 func (m *ModFile) Validate() []*report.DiagnosticItem {
 	diagnostics := make([]*report.DiagnosticItem, 0)
 
-	// check required fields
-	if m.Version == nil {
-		diagnostics = append(diagnostics, report.FromFile(
-			m.file,
-			severity.Error,
-			"version is required",
-		))
-	}
-	if m.Name == nil {
-		diagnostics = append(diagnostics, report.FromFile(
-			m.file,
-			severity.Error,
-			"name is required",
-		))
-	}
-	if m.Path == nil {
-		diagnostics = append(diagnostics, report.FromFile(
-			m.file,
-			severity.Error,
-			"path is required",
-		))
-	}
+	fields := validator.NewBlockValidator(m.AST.Block)
+
+	// Check for required fields
+	fields.RequireField("version")
+	fields.RequireField("name")
+	fields.RequireField("path")
+
+	// Check types of fields (if they exist)
+	fields.ExpectString("version")
+	fields.ExpectString("name")
+	fields.ExpectString("path")
+
+	// Optional fields: only check types if they are present
+	fields.ExpectString("supported_version")
+	fields.ExpectString("picture")
+
+	diagnostics = append(diagnostics, fields.Errors()...)
+
+	// validate token block
+	tags := m.AST.Block.GetTokenBlock("tags")
+
+	tag_validator := validator.NewTokenValidator(tags)
+	tag_validator.ExpectAllTokens(tokens.QUOTED_STRING)
+
+	diagnostics = append(diagnostics, tag_validator.Errors()...)
 
 	return diagnostics
 }

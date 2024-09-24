@@ -5,6 +5,7 @@ import (
 
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
+	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/pkg/report/severity"
 )
 
@@ -15,7 +16,7 @@ type DiagnosticItem struct {
 }
 
 type DiagnosticPointer struct {
-	Loc    *files.Loc
+	Loc    files.Loc
 	Length int
 }
 
@@ -44,6 +45,19 @@ func FromToken(token *tokens.Token, severity severity.Severity, msg string) *Dia
 
 func FromFile(file *files.FileEntry, severity severity.Severity, msg string) *DiagnosticItem {
 	loc := files.LocFromFileEntry(file)
+
+	return &DiagnosticItem{
+		Severity: severity,
+		Msg:      msg,
+		Pointer: &DiagnosticPointer{
+			Loc:    *loc,
+			Length: 0,
+		},
+	}
+}
+
+func FromBlock(file_block *ast.FileBlock, severity severity.Severity, msg string) *DiagnosticItem {
+	loc := file_block.Loc
 
 	return &DiagnosticItem{
 		Severity: severity,

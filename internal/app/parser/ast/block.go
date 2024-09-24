@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 
+	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 )
 
@@ -22,6 +23,7 @@ type FileBlock = FieldBlock
 // Field Block is a block with a list of fields
 type FieldBlock struct {
 	Values []*Field `json:"fields"`
+	Loc    files.Loc
 }
 
 func (fb *FieldBlock) IsBlock() {}
@@ -88,6 +90,36 @@ func (fb *FieldBlock) GetFieldList(key string) []*tokens.Token {
 	}
 
 	return nil
+}
+
+func (fb *FieldBlock) GetFieldBlock(key string) *FieldBlock {
+	// get the field
+	field := fb.GetField(key)
+	if field == nil {
+		return nil
+	}
+
+	block, ok := field.Value.(*FieldBlock)
+	if !ok {
+		return nil
+	}
+
+	return block
+}
+
+func (fb *FieldBlock) GetTokenBlock(key string) *TokenBlock {
+	// get the field
+	field := fb.GetField(key)
+	if field == nil {
+		return nil
+	}
+
+	block, ok := field.Value.(*TokenBlock)
+	if !ok {
+		return nil
+	}
+
+	return block
 }
 
 // Token Block is a block with a list of tokens

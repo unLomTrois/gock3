@@ -1,5 +1,7 @@
 package validator
 
+import "github.com/unLomTrois/gock3/pkg/report"
+
 type Validator interface {
-	Validate() []error
+	Errors() []*report.DiagnosticItem
 }

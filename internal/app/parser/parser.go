@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 )
@@ -10,12 +11,14 @@ import (
 type Parser struct {
 	tokenstream *tokens.TokenStream
 	lookahead   *tokens.Token
+	loc         *files.Loc
 }
 
 func New(tokenstream *tokens.TokenStream) *Parser {
 	return &Parser{
 		tokenstream: tokenstream,
 		lookahead:   nil,
+		loc:         nil,
 	}
 }
 
@@ -23,12 +26,14 @@ func Parse(token_stream *tokens.TokenStream) *ast.FileBlock {
 	p := New(token_stream)
 
 	p.lookahead = p.tokenstream.Next()
+	p.loc = &p.lookahead.Loc
 
 	return p.fileBlock()
 }
 
 func (p *Parser) fileBlock() *ast.FileBlock {
-	return &ast.FileBlock{Values: p.FieldList()}
+	loc := *p.loc
+	return &ast.FileBlock{Values: p.FieldList(), Loc: loc}
 }
 
 func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*ast.Field {
@@ -123,13 +128,14 @@ func (p *Parser) Value() (ast.BV, error) {
 
 func (p *Parser) Block() (ast.Block, error) {
 	p.Expect(tokens.START)
+	loc := *p.loc
 
 	switch p.lookahead.Type {
 	case tokens.COMMENT:
 		p.Expect(tokens.COMMENT)
 		fallthrough
 	case tokens.WORD:
-		return p.FieldBlock(), nil
+		return p.FieldBlock(loc), nil
 	case tokens.NUMBER, tokens.QUOTED_STRING:
 		return p.TokenBlock(), nil
 	default:
@@ -137,10 +143,10 @@ func (p *Parser) Block() (ast.Block, error) {
 	}
 }
 
-func (p *Parser) FieldBlock() *ast.FieldBlock {
+func (p *Parser) FieldBlock(loc files.Loc) *ast.FieldBlock {
 	nodes := p.FieldList(tokens.END)
 	p.Expect(tokens.END)
-	return &ast.FieldBlock{Values: nodes}
+	return &ast.FieldBlock{Values: nodes, Loc: loc}
 }
 
 func (p *Parser) TokenBlock() *ast.TokenBlock {
@@ -199,6 +205,7 @@ func (p *Parser) Expect(expectedtype tokens.TokenType) *tokens.Token {
 		panic("[Parser] Unexpected token: \"" + string(token.Value) + "\" with type of " + string(token.Type) + "\nexpected type: " + string(expectedtype))
 	}
 
+	p.loc = &token.Loc
 	p.lookahead = p.tokenstream.Next()
 
 	return token

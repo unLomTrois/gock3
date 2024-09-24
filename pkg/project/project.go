@@ -3,10 +3,12 @@ package project
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
+	"github.com/unLomTrois/gock3/pkg/cache"
 	"github.com/unLomTrois/gock3/pkg/report"
 	"github.com/unLomTrois/gock3/pkg/report/severity"
 )
@@ -18,9 +20,6 @@ type Project struct {
 }
 
 func NewProject(gameDir string, modFileDescriptor string) (*Project, error) {
-
-	fmt.Println(gameDir, modFileDescriptor)
-
 	// check game dir
 	if _, err := os.Stat(gameDir); os.IsNotExist(err) {
 		return nil, fmt.Errorf("game directory %s does not exist", gameDir)
@@ -78,6 +77,8 @@ func (p *Project) LoadMod() error {
 }
 
 func (p *Project) Validate() []*report.DiagnosticItem {
+	file_cache := cache.NewFileCache()
+
 	if len(p.Diagnostics) > 0 {
 		for _, err := range p.Diagnostics {
 			var c *color.Color
@@ -92,9 +93,30 @@ func (p *Project) Validate() []*report.DiagnosticItem {
 			filename, _ := err.Pointer.Loc.Filename()
 			column := err.Pointer.Loc.Column
 			line := err.Pointer.Loc.Line
-			c.Println(fmt.Sprintf("[%s:%d:%d]: %s", filename, line, column, err.Msg))
+
+			err_line := getErrorLine(file_cache, err, column)
+
+			if err.Pointer.Loc.Line == 1 && err.Pointer.Loc.Column == 1 {
+				c.Println(fmt.Sprintf("[%s:%d:%d]: %s", filename, line, column, err.Msg))
+
+				continue
+			}
+
+			c.Println(fmt.Sprintf("[%s:%d:%d]: %s, got %s", filename, line, column, err.Msg, err_line))
 		}
 	}
 
 	return p.Diagnostics
+}
+
+func getErrorLine(fileCache *cache.FileCache, err *report.DiagnosticItem, column uint16) string {
+	line_start := fileCache.GetLine(&err.Pointer.Loc)
+	// fmt.Println(strconv.Quote(lineStart))
+
+	// replace tabs to spaces, because loc sees \t as 4 symbols...
+	// todo: do something
+	spaced_line := strings.ReplaceAll(line_start, "\t", "    ")
+
+	errorEndIndex := column + uint16(err.Pointer.Length) - 1
+	return spaced_line[:errorEndIndex]
 }

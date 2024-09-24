@@ -68,3 +68,7 @@ func LocFromFileEntry(entry *FileEntry) *Loc {
 		Column: 1,
 	}
 }
+
+func (loc *Loc) GetIdx() PathTableIndex {
+	return loc.idx
+}
