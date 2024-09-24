@@ -15,15 +15,15 @@ type Loc struct {
 }
 
 // ForFile создает новый Loc для файла
-func ForFile(pathname string, kind FileKind, fullpath string) Loc {
-	idx := PATHTABLE.Store(fullpath)
-	return Loc{
-		idx:    idx,
-		kind:   kind,
-		Line:   0,
-		Column: 0,
-	}
-}
+// func ForFile(pathname string, kind FileKind, fullpath string) Loc {
+// 	idx := PATHTABLE.Store(fullpath)
+// 	return Loc{
+// 		idx:    *idx,
+// 		kind:   kind,
+// 		Line:   0,
+// 		Column: 0,
+// 	}
+// }
 
 // Filename возвращает имя файла из Loc
 func (loc *Loc) Filename() (string, error) {
@@ -59,24 +59,12 @@ func (loc *Loc) SameFile(other Loc) bool {
 }
 
 // LocFromFileEntry создает Loc из FileEntry
-func LocFromFileEntry(entry *FileEntry) (Loc, error) {
-	if entry.PathIdx() != nil {
-		return Loc{
-			idx:    *entry.PathIdx(),
-			kind:   entry.Kind(),
-			Line:   1,
-			Column: 1,
-		}, nil
-	} else {
-		err := entry.StoreInPathTable()
-		if err != nil {
-			return Loc{}, err
-		}
-		return Loc{
-			idx:    *entry.PathIdx(),
-			kind:   entry.Kind(),
-			Line:   1,
-			Column: 1,
-		}, nil
+func LocFromFileEntry(entry *FileEntry) *Loc {
+	idx := entry.StoreInPathTable()
+	return &Loc{
+		idx:    *idx,
+		kind:   entry.Kind(),
+		Line:   1,
+		Column: 1,
 	}
 }

@@ -27,7 +27,7 @@ func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
 	ast := &ast.AST{
 		Filename: entry.FileName(),
 		Fullpath: entry.FullPath(),
-		Data:     file_block.Values,
+		Block:    file_block,
 	}
 
 	return ast, nil

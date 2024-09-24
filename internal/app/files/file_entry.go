@@ -1,7 +1,6 @@
 package files
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 )
@@ -51,13 +50,12 @@ func (fe *FileEntry) FileName() string {
 	return filepath.Base(fe.fullpath)
 }
 
-func (fe *FileEntry) StoreInPathTable() error {
+func (fe *FileEntry) StoreInPathTable() *PathTableIndex {
 	if fe.idx != nil {
-		return errors.New("PathTableIndex is already set")
+		return fe.idx
 	}
-	idx := PATHTABLE.Store(fe.fullpath)
-	fe.idx = &idx
-	return nil
+	fe.idx = PATHTABLE.Store(fe.fullpath)
+	return fe.idx
 }
 
 // PathIdx returns the index into the PathTable if it exists, otherwise nil.

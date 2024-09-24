@@ -45,13 +45,10 @@ func Scan(entry *files.FileEntry, text []byte) (*tokens.TokenStream, error) {
 
 	tokenStream := tokens.NewTokenStream()
 
-	loc, err := files.LocFromFileEntry(entry)
-	if err != nil {
-		return nil, err
-	}
+	loc := files.LocFromFileEntry(entry)
 
 	for lex.hasMoreTokens() {
-		token, err := lex.getNextToken(&loc)
+		token, err := lex.getNextToken(loc)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning tokens: %w", err)
 		}
@@ -93,7 +90,7 @@ func (lex *Lexer) getNextToken(loc *files.Loc) (*tokens.Token, error) {
 			loc.Column += 1
 			return nil, nil
 		default:
-			return tokens.New(string(match), tokenType, *loc), nil
+			return tokens.New(string(match), tokenType, loc), nil
 		}
 	}
 

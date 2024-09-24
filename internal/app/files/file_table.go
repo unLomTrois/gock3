@@ -46,14 +46,14 @@ func GetPathTableInstance() *pathTable {
 
 // Store is usually called from PATHTABLE, which is a "static namespace" of the package.
 // Hence public Store method should call GetPathTableInstance to get an actual singleton, and call its private store method
-func (PathTableStatic) Store(fullpath string) PathTableIndex {
+func (PathTableStatic) Store(fullpath string) *PathTableIndex {
 	return GetPathTableInstance().store(fullpath)
 }
 
-func (pt *pathTable) store(fullpath string) PathTableIndex {
+func (pt *pathTable) store(fullpath string) *PathTableIndex {
 	pt.mu.Lock()
 	defer pt.mu.Unlock()
-	idx := PathTableIndex{index: uint32(len(pt.paths))}
+	idx := &PathTableIndex{index: uint32(len(pt.paths))}
 	pt.paths = append(pt.paths, PathTableStore{fullpath: fullpath})
 	return idx
 }

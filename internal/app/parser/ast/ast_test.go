@@ -24,7 +24,7 @@ func TestFileBlock(t *testing.T) {
 					{
 						Key:      &tokens.Token{Value: "event", Type: tokens.WORD},
 						Operator: &tokens.Token{Value: "=", Type: tokens.EQUALS},
-						Value: FieldBlock{
+						Value: &FieldBlock{
 							Values: []*Field{
 								{
 									Key:      &tokens.Token{Value: "type", Type: tokens.WORD},
@@ -44,7 +44,7 @@ func TestFileBlock(t *testing.T) {
 					{
 						Key:      &tokens.Token{Value: "color", Type: tokens.WORD},
 						Operator: &tokens.Token{Value: "=", Type: tokens.EQUALS},
-						Value: TokenBlock{
+						Value: &TokenBlock{
 							Values: []*tokens.Token{
 								{Value: "255", Type: tokens.WORD},
 								{Value: "255", Type: tokens.WORD},
@@ -93,7 +93,7 @@ func TestFileBlock(t *testing.T) {
 					if v.Value == "" {
 						t.Error("expected token Value to be non-empty")
 					}
-				case FieldBlock:
+				case *FieldBlock:
 					if len(v.Values) == 0 {
 						t.Error("expected FieldBlock.Values to contain at least one Field")
 					}
@@ -102,7 +102,7 @@ func TestFileBlock(t *testing.T) {
 							t.Error("FieldBlock contains nil Field components")
 						}
 					}
-				case TokenBlock:
+				case *TokenBlock:
 					if len(v.Values) == 0 {
 						t.Error("expected TokenBlock.Values to contain at least one Token")
 					}

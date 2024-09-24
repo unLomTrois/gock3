@@ -4,21 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/unLomTrois/gock3/internal/app/cli"
-	"github.com/unLomTrois/gock3/internal/app/files"
-	"github.com/unLomTrois/gock3/internal/app/pdxfile"
-	"github.com/unLomTrois/gock3/internal/app/utils"
-)
-
-const (
-	inputFilePath   = "data/3_traits.txt"
-	outputDir       = "tmp"
-	tokenStreamFile = "token_stream.json"
-	parseTreeFile   = "parsetree.json"
-	lintedFile      = "linted.txt"
 )
 
 func root(args []string) error {
@@ -28,6 +15,7 @@ func root(args []string) error {
 
 	commands := []cli.Command{
 		cli.NewParseCommand(),
+		cli.NewProjectCommand(),
 	}
 
 	subcommand := args[1]
@@ -48,46 +36,46 @@ func main() {
 	}
 }
 
-func run() error {
-	start := time.Now()
-	defer func() {
-		log.Printf("Total execution time: %s", time.Since(start))
-	}()
+// func run() error {
+// 	start := time.Now()
+// 	defer func() {
+// 		log.Printf("Total execution time: %s", time.Since(start))
+// 	}()
 
-	vanilla_root := ""
-	mod_root := ""
-	replace_paths := []string{}
+// 	vanilla_root := ""
+// 	mod_root := ""
+// 	replace_paths := []string{}
 
-	mod_loader := files.NewModLoader(mod_root, replace_paths)
+// 	mod_loader := files.NewModLoader(mod_root, replace_paths)
 
-	fset := files.NewFileSet(vanilla_root, mod_loader)
+// 	fset := files.NewFileSet(vanilla_root, mod_loader)
 
-	traits_dir := "C:/Users/vadim/Documents/Paradox Interactive/Crusader Kings III/mod/T4N-CK3/T4N/common/traits"
+// 	traits_dir := "C:/Users/vadim/Documents/Paradox Interactive/Crusader Kings III/mod/T4N-CK3/T4N/common/traits"
 
-	err := fset.Scan(traits_dir)
-	if err != nil {
-		return fmt.Errorf("scanning files: %w", err)
-	}
+// 	err := fset.Scan(traits_dir)
+// 	if err != nil {
+// 		return fmt.Errorf("scanning files: %w", err)
+// 	}
 
-	path := inputFilePath
-	fullpath, err := filepath.Abs(path)
-	if err != nil {
-		return fmt.Errorf("getting absolute path: %w", err)
-	}
-	file_entry := files.NewFileEntry(fullpath, files.FileKind(files.Mod))
+// 	path := inputFilePath
+// 	fullpath, err := filepath.Abs(path)
+// 	if err != nil {
+// 		return fmt.Errorf("getting absolute path: %w", err)
+// 	}
+// 	file_entry := files.NewFileEntry(fullpath, files.FileKind(files.Mod))
 
-	parseTrees, err := pdxfile.ParseFile(file_entry)
-	if err != nil {
-		return fmt.Errorf("parsing tokens: %w", err)
-	}
+// 	parseTrees, err := pdxfile.ParseFile(file_entry)
+// 	if err != nil {
+// 		return fmt.Errorf("parsing tokens: %w", err)
+// 	}
 
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return err
-	}
+// 	if err := os.MkdirAll(outputDir, 0755); err != nil {
+// 		return err
+// 	}
 
-	if err := utils.SaveJSON(parseTrees, filepath.Join(outputDir, parseTreeFile)); err != nil {
-		return fmt.Errorf("saving parse tree: %w", err)
-	}
+// 	if err := utils.SaveJSON(parseTrees, filepath.Join(outputDir, parseTreeFile)); err != nil {
+// 		return fmt.Errorf("saving parse tree: %w", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
