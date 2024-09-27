@@ -45,7 +45,7 @@ func Scan(entry *files.FileEntry, text []byte) (*tokens.TokenStream, error) {
 
 	tokenStream := tokens.NewTokenStream()
 
-	loc := files.LocFromFileEntry(entry)
+	loc := tokens.LocFromFileEntry(entry)
 
 	for lex.hasMoreTokens() {
 		token, err := lex.getNextToken(loc)
@@ -65,7 +65,7 @@ func (lex *Lexer) remainder() []byte {
 	return lex.text[lex.cursor:]
 }
 
-func (lex *Lexer) getNextToken(loc *files.Loc) (*tokens.Token, error) {
+func (lex *Lexer) getNextToken(loc *tokens.Loc) (*tokens.Token, error) {
 	remainder := lex.remainder()
 
 	for _, tokenType := range tokens.TokenCheckOrder {

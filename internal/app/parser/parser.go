@@ -3,7 +3,6 @@ package parser
 import (
 	"fmt"
 
-	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 )
@@ -11,7 +10,7 @@ import (
 type Parser struct {
 	tokenstream *tokens.TokenStream
 	lookahead   *tokens.Token
-	loc         *files.Loc
+	loc         *tokens.Loc
 }
 
 func New(tokenstream *tokens.TokenStream) *Parser {
@@ -143,7 +142,7 @@ func (p *Parser) Block() (ast.Block, error) {
 	}
 }
 
-func (p *Parser) FieldBlock(loc files.Loc) *ast.FieldBlock {
+func (p *Parser) FieldBlock(loc tokens.Loc) *ast.FieldBlock {
 	nodes := p.FieldList(tokens.END)
 	p.Expect(tokens.END)
 	return &ast.FieldBlock{Values: nodes, Loc: loc}

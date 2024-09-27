@@ -16,7 +16,7 @@ type DiagnosticItem struct {
 }
 
 type DiagnosticPointer struct {
-	Loc    files.Loc
+	Loc    tokens.Loc
 	Length int
 }
 
@@ -44,7 +44,7 @@ func FromToken(token *tokens.Token, severity severity.Severity, msg string) *Dia
 }
 
 func FromFile(file *files.FileEntry, severity severity.Severity, msg string) *DiagnosticItem {
-	loc := files.LocFromFileEntry(file)
+	loc := tokens.LocFromFileEntry(file)
 
 	return &DiagnosticItem{
 		Severity: severity,

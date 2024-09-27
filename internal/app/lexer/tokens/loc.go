@@ -1,17 +1,19 @@
-package files
+package tokens
 
 import (
 	"path/filepath"
+
+	"github.com/unLomTrois/gock3/internal/app/files"
 )
 
 // Предполагаем, что PathTableIndex, FileKind, и MacroMapIndex уже определены
 
 // Loc представляет позицию сущности в файле
 type Loc struct {
-	idx    PathTableIndex `json:"-"`
-	Line   uint32         `json:"line"`
-	Column uint16         `json:"column"`
-	kind   FileKind       `json:"-"`
+	idx    files.PathTableIndex `json:"-"`
+	Line   uint32               `json:"line"`
+	Column uint16               `json:"column"`
+	kind   files.FileKind       `json:"-"`
 }
 
 // ForFile создает новый Loc для файла
@@ -27,7 +29,7 @@ type Loc struct {
 
 // Filename возвращает имя файла из Loc
 func (loc *Loc) Filename() (string, error) {
-	path, err := PATHTABLE.LookupFullpath(loc.idx)
+	path, err := files.PATHTABLE.LookupFullpath(loc.idx)
 	if err != nil {
 		return "", err
 	}
@@ -37,7 +39,7 @@ func (loc *Loc) Filename() (string, error) {
 
 // Pathname возвращает относительный путь из Loc
 func (loc *Loc) Pathname() (string, error) {
-	path, err := PATHTABLE.LookupFullpath(loc.idx)
+	path, err := files.PATHTABLE.LookupFullpath(loc.idx)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +48,7 @@ func (loc *Loc) Pathname() (string, error) {
 
 // Fullpath возвращает полный путь из Loc
 func (loc *Loc) Fullpath() (string, error) {
-	fullpath, err := PATHTABLE.LookupFullpath(loc.idx)
+	fullpath, err := files.PATHTABLE.LookupFullpath(loc.idx)
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +61,7 @@ func (loc *Loc) SameFile(other Loc) bool {
 }
 
 // LocFromFileEntry создает Loc из FileEntry
-func LocFromFileEntry(entry *FileEntry) *Loc {
+func LocFromFileEntry(entry *files.FileEntry) *Loc {
 	idx := entry.StoreInPathTable()
 	return &Loc{
 		idx:    *idx,
@@ -69,6 +71,6 @@ func LocFromFileEntry(entry *FileEntry) *Loc {
 	}
 }
 
-func (loc *Loc) GetIdx() PathTableIndex {
+func (loc *Loc) GetIdx() files.PathTableIndex {
 	return loc.idx
 }

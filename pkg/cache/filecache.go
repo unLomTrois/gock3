@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
+	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 )
 
 type FileCache struct {
@@ -44,7 +45,7 @@ func (f *FileCache) Set(index files.PathTableIndex, value string) {
 	f.cache[index] = value
 }
 
-func (f *FileCache) GetLine(loc *files.Loc) string {
+func (f *FileCache) GetLine(loc *tokens.Loc) string {
 	index := loc.GetIdx()
 
 	// check lines cache
