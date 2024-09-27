@@ -61,7 +61,7 @@ func (m *ModFile) Validate() []*report.DiagnosticItem {
 	tags := m.AST.Block.GetTokenBlock("tags")
 
 	tag_validator := validator.NewTokenValidator(tags)
-	tag_validator.ExpectAllTokens(tokens.QUOTED_STRING)
+	tag_validator.ExpectAllTokensToBe(tokens.QUOTED_STRING)
 
 	diagnostics = append(diagnostics, tag_validator.Errors()...)
 

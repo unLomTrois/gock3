@@ -21,7 +21,7 @@ func NewTokenValidator(block *ast.TokenBlock) *TokenValidator {
 }
 
 // expect all tokens to be certain type, using Token.IsType
-func (tv *TokenValidator) ExpectAllTokens(ttype tokens.TokenType) bool {
+func (tv *TokenValidator) ExpectAllTokensToBe(ttype tokens.TokenType) bool {
 	ok := true
 
 	for _, token := range tv.Block.Values {
