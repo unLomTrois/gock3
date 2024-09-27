@@ -30,7 +30,7 @@ func NewModFile(AST *ast.AST, file_entry *files.FileEntry) *ModFile {
 		Tags:             block.GetFieldList("tags"),
 		Name:             block.GetFieldValue("name"),
 		Path:             block.GetFieldValue("path"),
-		ReplacePaths:     block.GetFieldsValues("replace_paths"),
+		ReplacePaths:     block.GetFieldsValues("replace_path"),
 		SupportedVersion: block.GetFieldValue("supported_version"),
 		Picture:          block.GetFieldValue("picture"),
 	}

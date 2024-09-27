@@ -36,8 +36,21 @@ func NewProject(gameDir string, modFileDescriptor string) (*Project, error) {
 }
 
 func (p *Project) Load() {
+	mod := p.LoadMod()
 
-	p.LoadMod()
+	replace_paths := make([]string, len(mod.ReplacePaths))
+	for i, token := range mod.ReplacePaths {
+		replace_paths[i] = token.Value
+	}
+
+	fmt.Println("mod path", mod.Path)
+
+	mod_loader := files.NewModLoader(mod.Path.Value, replace_paths)
+	fset := files.NewFileSet(p.GameDir, mod_loader)
+	err := fset.Scan("C:/Users/vadim/Documents/Paradox Interactive/Crusader Kings III/mod/T4N-CK3/T4N/common/traits")
+	if err != nil {
+		panic(err)
+	}
 
 	p.Validate()
 
@@ -45,17 +58,14 @@ func (p *Project) Load() {
 
 	// mod_loader := files.NewModLoader(p.ModFileDescriptor, replace_paths)
 
-	// fset := files.NewFileSet(p.GameDir, mod_loader)
-
-	// err := fset.Scan()
 }
 
-func (p *Project) LoadMod() error {
+func (p *Project) LoadMod() *ModFile {
 	file_entry := files.NewFileEntry(p.ModFileDescriptor, files.FileKind(files.Mod))
 
 	AST, err := pdxfile.ParseFile(file_entry)
 	if err != nil {
-		return err
+		return nil
 	}
 
 	mod := NewModFile(AST, file_entry)
@@ -63,17 +73,7 @@ func (p *Project) LoadMod() error {
 	diagnostics := mod.Validate()
 	p.Diagnostics = append(p.Diagnostics, diagnostics...)
 
-	return nil
-	// validate
-
-	// mod_loader := files.NewModLoader(p.ModFileDescriptor, []string{})
-
-	// fset := files.NewFileSet(p.GameDir, mod_loader)
-
-	// err := fset.Scan()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	return mod
 }
 
 func (p *Project) Validate() []*report.DiagnosticItem {
