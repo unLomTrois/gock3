@@ -94,7 +94,7 @@ func (lex *Lexer) getNextToken(loc *tokens.Loc) (*tokens.Token, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unexpected token at position: line %d, col %d: %q", loc.Line, loc.Column, string(lex.text[0]))
+	return nil, fmt.Errorf("unexpected token at position: line %d, col %d: %q", loc.Line, loc.Column, string(remainder[0]))
 }
 
 // GetContext returns a window of characters around the current cursor position
