@@ -8,6 +8,7 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/lexer"
 	"github.com/unLomTrois/gock3/internal/app/parser"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
+	"github.com/unLomTrois/gock3/pkg/report"
 )
 
 func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
@@ -16,13 +17,14 @@ func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
 		return nil, fmt.Errorf("reading file: %w", err)
 	}
 
-	token_stream, err := lexer.Scan(entry, content)
-	if err != nil {
-		return nil, err
-	}
+	var errs []*report.DiagnosticItem
 
-	file_block := parser.Parse(token_stream)
-	// todo: err here
+	token_stream, lexer_errs := lexer.Scan(entry, content)
+
+	errs = append(errs, lexer_errs...)
+
+	file_block, parser_errs := parser.Parse(token_stream)
+	errs = append(errs, parser_errs...)
 
 	ast := &ast.AST{
 		Filename: entry.FileName(),

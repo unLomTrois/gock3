@@ -68,3 +68,17 @@ func FromBlock(file_block *ast.FileBlock, severity severity.Severity, msg string
 		},
 	}
 }
+
+// FromLoc creates a new DiagnosticItem from a loc
+// Primary used in cases when you know the loc but you don't know the token
+// Happens in Lexer
+func FromLoc(loc tokens.Loc, severity severity.Severity, msg string) *DiagnosticItem {
+	return &DiagnosticItem{
+		Severity: severity,
+		Msg:      msg,
+		Pointer: &DiagnosticPointer{
+			Loc:    loc,
+			Length: 0,
+		},
+	}
+}

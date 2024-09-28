@@ -3,11 +3,12 @@ package lexer
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
+	"github.com/unLomTrois/gock3/pkg/report"
+	"github.com/unLomTrois/gock3/pkg/report/severity"
 )
 
 type Lexer struct {
@@ -17,13 +18,7 @@ type Lexer struct {
 	line           int
 	column         int
 	patternMatcher *TokenPatternMatcher
-}
-
-// NormalizeText trims spaces and converts CRLF to LF
-func NormalizeText(text []byte) []byte {
-	text = bytes.TrimSpace(text)
-	text = bytes.ReplaceAll(text, []byte("\r\n"), []byte("\n"))
-	return text
+	*report.ErrorManager
 }
 
 // NewLexer creates a new Lexer instance
@@ -35,7 +30,15 @@ func NewLexer(entry *files.FileEntry, text []byte) *Lexer {
 		line:           1,
 		column:         1,
 		patternMatcher: NewTokenPatternMatcher(),
+		ErrorManager:   report.NewErrorManager(),
 	}
+}
+
+// NormalizeText trims spaces and converts CRLF to LF
+func NormalizeText(text []byte) []byte {
+	text = bytes.TrimSpace(text)
+	text = bytes.ReplaceAll(text, []byte("\r\n"), []byte("\n"))
+	return text
 }
 
 func (lex *Lexer) hasMoreTokens() bool {
@@ -43,31 +46,29 @@ func (lex *Lexer) hasMoreTokens() bool {
 }
 
 // Scan tokenizes the entire input text
-func Scan(entry *files.FileEntry, text []byte) (*tokens.TokenStream, error) {
+func Scan(entry *files.FileEntry, text []byte) (*tokens.TokenStream, []*report.DiagnosticItem) {
 	lex := NewLexer(entry, text)
 
 	tokenStream := tokens.NewTokenStream()
 
 	for lex.hasMoreTokens() {
-		token, err := lex.getNextToken()
-		if err != nil {
-			return nil, fmt.Errorf("error scanning tokens: %w", err)
+		token := lex.getNextToken()
+		if token == nil {
+			continue
 		}
-		if token != nil {
-			tokenStream.Push(token)
-		}
+		tokenStream.Push(token)
 	}
 
-	return tokenStream, nil
+	return tokenStream, lex.Errors()
 }
 
 func (lex *Lexer) remainder() []byte {
 	return lex.text[lex.cursor:]
 }
 
-func (lex *Lexer) getNextToken() (*tokens.Token, error) {
+func (lex *Lexer) getNextToken() *tokens.Token {
 	if !lex.hasMoreTokens() {
-		return nil, nil
+		return nil
 	}
 
 	remainder := lex.remainder()
@@ -100,33 +101,36 @@ func (lex *Lexer) getNextToken() (*tokens.Token, error) {
 		case tokens.TAB:
 			// Consider tab width as 4 spaces
 			lex.column += 4 // Already added 1 in len(longestMatch)
-			return nil, nil
+			return nil
 		case tokens.NEXTLINE:
 			lex.line++
 			lex.column = 1
-			return nil, nil
+			return nil
 		case tokens.WHITESPACE:
 			// Ignore whitespace
-			return nil, nil
+			return nil
 		case tokens.COMMENT:
 			// Ignore comments
-			return nil, nil
+			return nil
 		default:
 			lex.column += len(matchedToken)
 			loc := tokens.LocFromFileEntry(lex.entry)
 			loc.Line = uint32(startLine)
 			loc.Column = uint16(startColumn)
-			return tokens.New(tokenValue, matchedTokenType, *loc), nil
+			return tokens.New(tokenValue, matchedTokenType, *loc)
 		}
 	}
 
-	// Handle unexpected characters
 	unexpectedChar := remainder[0]
-	errMsg := fmt.Sprintf("unexpected token at line %d, column %d: '%c'", lex.line, lex.column, unexpectedChar)
+	loc := tokens.LocFromFileEntry(lex.entry)
+	loc.Line = uint32(lex.line)
+	loc.Column = uint16(lex.column)
+	err := report.FromLoc(*loc, severity.Critical, fmt.Sprintf("unexpected token '%c'", unexpectedChar))
+	lex.AddError(err)
 
 	// Advance cursor to prevent infinite loop
 	lex.cursor++
 	lex.column++
 
-	return nil, errors.New(errMsg)
+	return nil
 }
