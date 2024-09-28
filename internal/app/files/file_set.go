@@ -1,7 +1,6 @@
 package files
 
 import (
-	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -10,7 +9,7 @@ import (
 type FileSet struct {
 	// path to ck3/game
 	VanillaRoot string
-	Mod         *ModLoader
+	ModLoader   *ModLoader
 	Files       []*FileEntry
 }
 
@@ -20,10 +19,10 @@ type ModLoader struct {
 	ReplacePaths []string
 }
 
-func NewFileSet(vanillaRoot string, mod *ModLoader) *FileSet {
+func NewFileSet(vanillaRoot string, modLoader *ModLoader) *FileSet {
 	return &FileSet{
 		VanillaRoot: vanillaRoot,
-		Mod:         mod,
+		ModLoader:   modLoader,
 	}
 }
 
@@ -35,26 +34,33 @@ func NewModLoader(modRoot string, replacePaths []string) *ModLoader {
 }
 
 func (fset *FileSet) Scan(path string) error {
-	// walk dir and add to fset.Files
-	// use filepath.Walk
+	cleanReplacePaths := make([]string, 0, len(fset.ModLoader.ReplacePaths))
+	for _, replacePath := range fset.ModLoader.ReplacePaths {
+		cleanReplacePaths = append(cleanReplacePaths, filepath.Clean(replacePath))
+	}
 
-	clean_path := filepath.Clean(path)
-
-	err := filepath.Walk(clean_path, func(p string, info fs.FileInfo, err error) error {
+	err := filepath.WalkDir(path, func(subpath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if !info.IsDir() {
-			inner_path := strings.TrimPrefix(p, clean_path)
-			fmt.Println(p)
-			fmt.Println(inner_path)
+		if d.IsDir() {
+			for _, replacePath := range cleanReplacePaths {
+				if strings.Contains(subpath, replacePath) {
+					return filepath.SkipDir
+				}
+			}
 
-			file_entry := NewFileEntry(p, Mod)
-
-			fset.Files = append(fset.Files, file_entry)
-		} else {
+			return nil
 		}
+
+		if !(strings.HasSuffix(subpath, ".txt")) {
+			return nil
+		}
+
+		file_entry := NewFileEntry(subpath, Mod)
+
+		fset.Files = append(fset.Files, file_entry)
 
 		return nil
 	})
