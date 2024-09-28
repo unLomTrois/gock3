@@ -3,6 +3,7 @@ package lexer
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
@@ -14,6 +15,7 @@ type Lexer struct {
 	text           []byte
 	cursor         int
 	line           int
+	column         int
 	patternMatcher *TokenPatternMatcher
 }
 
@@ -31,6 +33,7 @@ func NewLexer(entry *files.FileEntry, text []byte) *Lexer {
 		text:           NormalizeText(text),
 		cursor:         0,
 		line:           1,
+		column:         1,
 		patternMatcher: NewTokenPatternMatcher(),
 	}
 }
@@ -45,16 +48,13 @@ func Scan(entry *files.FileEntry, text []byte) (*tokens.TokenStream, error) {
 
 	tokenStream := tokens.NewTokenStream()
 
-	loc := tokens.LocFromFileEntry(entry)
-
 	for lex.hasMoreTokens() {
-		token, err := lex.getNextToken(loc)
+		token, err := lex.getNextToken()
 		if err != nil {
 			return nil, fmt.Errorf("error scanning tokens: %w", err)
 		}
 		if token != nil {
 			tokenStream.Push(token)
-			loc.Column += uint16(len(token.Value))
 		}
 	}
 
@@ -65,34 +65,68 @@ func (lex *Lexer) remainder() []byte {
 	return lex.text[lex.cursor:]
 }
 
-func (lex *Lexer) getNextToken(loc *tokens.Loc) (*tokens.Token, error) {
+func (lex *Lexer) getNextToken() (*tokens.Token, error) {
+	if !lex.hasMoreTokens() {
+		return nil, nil
+	}
+
 	remainder := lex.remainder()
 
+	var matchedToken []byte
+	var matchedTokenType tokens.TokenType
+
+	// Keep track of the initial line and column for the token
+	startLine := lex.line
+	startColumn := lex.column
+
+	// Try to match tokens in the specified order
 	for _, tokenType := range tokens.TokenCheckOrder {
 		match := lex.patternMatcher.MatchToken(tokenType, remainder)
 		if match == nil {
 			continue
 		}
 
-		lex.cursor += len(match)
+		// Accept the first match
+		matchedToken = match
+		matchedTokenType = tokenType
+		break
+	}
 
-		switch tokenType {
+	if matchedToken != nil {
+		tokenValue := string(matchedToken)
+		lex.cursor += len(matchedToken)
+
+		switch matchedTokenType {
 		case tokens.TAB:
-			// TODO: Consider using a tab width from users editor settings
-			loc.Column += 4
+			// Consider tab width as 4 spaces
+			lex.column += 4 // Already added 1 in len(longestMatch)
 			return nil, nil
 		case tokens.NEXTLINE:
-			loc.Line += 1
-			loc.Column = 1
 			lex.line++
+			lex.column = 1
 			return nil, nil
 		case tokens.WHITESPACE:
-			loc.Column += 1
+			// Ignore whitespace
+			return nil, nil
+		case tokens.COMMENT:
+			// Ignore comments
 			return nil, nil
 		default:
-			return tokens.New(string(match), tokenType, *loc), nil
+			lex.column += len(matchedToken)
+			loc := tokens.LocFromFileEntry(lex.entry)
+			loc.Line = uint32(startLine)
+			loc.Column = uint16(startColumn)
+			return tokens.New(tokenValue, matchedTokenType, *loc), nil
 		}
 	}
 
-	return nil, fmt.Errorf("unexpected token at position: line %d, col %d: %q", loc.Line, loc.Column, string(remainder[0]))
+	// Handle unexpected characters
+	unexpectedChar := remainder[0]
+	errMsg := fmt.Sprintf("unexpected token at line %d, column %d: '%c'", lex.line, lex.column, unexpectedChar)
+
+	// Advance cursor to prevent infinite loop
+	lex.cursor++
+	lex.column++
+
+	return nil, errors.New(errMsg)
 }
