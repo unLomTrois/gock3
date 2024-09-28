@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
@@ -183,7 +184,7 @@ func (p *Parser) Literal() *tokens.Token {
 	case tokens.NUMBER:
 		return p.Expect(tokens.NUMBER)
 	case tokens.QUOTED_STRING:
-		return p.Expect(tokens.QUOTED_STRING)
+		return p.unquoteExpect(tokens.QUOTED_STRING)
 	case tokens.BOOL:
 		return p.Expect(tokens.BOOL)
 	default:
@@ -206,6 +207,14 @@ func (p *Parser) Expect(expectedtype tokens.TokenType) *tokens.Token {
 
 	p.loc = &token.Loc
 	p.lookahead = p.tokenstream.Next()
+
+	return token
+}
+
+func (p *Parser) unquoteExpect(expectedtype tokens.TokenType) *tokens.Token {
+	token := p.Expect(expectedtype)
+
+	token.Value, _ = strconv.Unquote(token.Value)
 
 	return token
 }
