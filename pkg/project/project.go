@@ -9,20 +9,22 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
 	"github.com/unLomTrois/gock3/pkg/cache"
+	"github.com/unLomTrois/gock3/pkg/data"
 	"github.com/unLomTrois/gock3/pkg/report"
 	"github.com/unLomTrois/gock3/pkg/report/severity"
 )
 
 type Project struct {
-	GameDir           string
+	VanillaDir        string
 	ModFileDescriptor string
 	Diagnostics       []*report.DiagnosticItem
+	Common            *data.Common
 }
 
-func NewProject(gameDir string, modFileDescriptor string) (*Project, error) {
+func NewProject(vanillaDir string, modFileDescriptor string) (*Project, error) {
 	// check game dir
-	if _, err := os.Stat(gameDir); os.IsNotExist(err) {
-		return nil, fmt.Errorf("game directory %s does not exist", gameDir)
+	if _, err := os.Stat(vanillaDir); os.IsNotExist(err) {
+		return nil, fmt.Errorf("game directory %s does not exist", vanillaDir)
 	}
 	// check mod file
 	if _, err := os.Stat(modFileDescriptor); os.IsNotExist(err) {
@@ -30,27 +32,36 @@ func NewProject(gameDir string, modFileDescriptor string) (*Project, error) {
 	}
 
 	return &Project{
-		GameDir:           gameDir,
+		VanillaDir:        vanillaDir,
 		ModFileDescriptor: modFileDescriptor,
+		Diagnostics:       []*report.DiagnosticItem{},
+		Common:            nil,
 	}, nil
 }
 
 func (p *Project) Load() {
 	mod := p.LoadMod()
 
-	replace_paths := make([]string, len(mod.ReplacePaths))
+	replacePaths := make([]string, len(mod.ReplacePaths))
 	for i, token := range mod.ReplacePaths {
-		replace_paths[i] = token.Value
+		replacePaths[i] = token.Value
 	}
 
 	fmt.Println("mod path", mod.Path)
 
-	mod_loader := files.NewModLoader(mod.Path.Value, replace_paths)
-	fset := files.NewFileSet(p.GameDir, mod_loader)
-	err := fset.Scan("C:/Users/vadim/Documents/Paradox Interactive/Crusader Kings III/mod/T4N-CK3/T4N/common/traits")
-	if err != nil {
-		panic(err)
-	}
+	mod_loader := files.NewModLoader(mod.Path.Value, replacePaths)
+	fset := files.NewFileSet(p.VanillaDir, mod_loader)
+
+	fset.Scan(p.VanillaDir)
+
+	fmt.Println(len(fset.Files))
+
+	fmt.Println(fset.Files[1000].FullPath())
+
+	// err := fset.Scan("C:/Users/vadim/Documents/Paradox Interactive/Crusader Kings III/mod/T4N-CK3/T4N/common/traits")
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	p.Validate()
 
