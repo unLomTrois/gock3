@@ -21,8 +21,8 @@ type FileBlock = FieldBlock
 
 // Field Block is a block with a list of fields
 type FieldBlock struct {
-	Values []*Field `json:"fields"`
-	Loc    tokens.Loc
+	Values []*Field   `json:"fields"`
+	Loc    tokens.Loc `json:"-"`
 }
 
 func (fb *FieldBlock) IsBlock() {}
