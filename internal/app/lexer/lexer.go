@@ -108,6 +108,7 @@ func (lex *Lexer) getNextToken() *tokens.Token {
 			return nil
 		case tokens.WHITESPACE:
 			// Ignore whitespace
+			lex.column++
 			return nil
 		case tokens.COMMENT:
 			// Ignore comments

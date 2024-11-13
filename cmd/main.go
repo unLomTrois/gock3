@@ -8,9 +8,17 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/cli"
 )
 
+func main() {
+	if err := root(os.Args); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+}
+
 func root(args []string) error {
-	if len(args) < 1 {
-		return fmt.Errorf("no subcommand provided")
+	if len(args) < 2 {
+		fmt.Println("No command provided")
+		printHelp()
+		return nil
 	}
 
 	commands := []cli.Command{
@@ -30,10 +38,11 @@ func root(args []string) error {
 	return fmt.Errorf("unknown subcommand: %s", subcommand)
 }
 
-func main() {
-	if err := root(os.Args); err != nil {
-		log.Fatalf("Error: %v", err)
-	}
+func printHelp() {
+	fmt.Println("Available commands:")
+	fmt.Println("  parse   - Description of parse command")
+	fmt.Println("  project - Description of project command")
+	// add descriptions for each command
 }
 
 // func run() error {

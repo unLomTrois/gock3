@@ -1,46 +1,65 @@
+// internal/app/parser/parser.go
 package parser
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
+	"github.com/unLomTrois/gock3/pkg/report"
+	"github.com/unLomTrois/gock3/pkg/report/severity"
 )
 
+// Parser represents the parser with its current state and error manager.
 type Parser struct {
 	tokenstream *tokens.TokenStream
 	lookahead   *tokens.Token
 	loc         *tokens.Loc
+	*report.ErrorManager
 }
 
+// New creates a new Parser instance.
 func New(tokenstream *tokens.TokenStream) *Parser {
 	return &Parser{
-		tokenstream: tokenstream,
-		lookahead:   nil,
-		loc:         nil,
+		tokenstream:  tokenstream,
+		lookahead:    nil,
+		loc:          nil,
+		ErrorManager: report.NewErrorManager(),
 	}
 }
 
-func Parse(token_stream *tokens.TokenStream) *ast.FileBlock {
+// Parse processes the token stream and returns the AST along with any diagnostic errors.
+func Parse(token_stream *tokens.TokenStream) (*ast.FileBlock, []*report.DiagnosticItem) {
 	p := New(token_stream)
 
 	p.lookahead = p.tokenstream.Next()
-	p.loc = &p.lookahead.Loc
+	if p.lookahead != nil {
+		p.loc = &p.lookahead.Loc
+	}
 
-	return p.fileBlock()
+	fileBlock := p.fileBlock()
+	return fileBlock, p.Errors()
 }
 
+// fileBlock parses the entire file and constructs the AST's FileBlock.
 func (p *Parser) fileBlock() *ast.FileBlock {
-	loc := *p.loc
-	return &ast.FileBlock{Values: p.FieldList(), Loc: loc}
+	if p.lookahead == nil {
+		// Empty file
+		return &ast.FileBlock{Values: []*ast.Field{}, Loc: tokens.Loc{}}
+	}
+
+	loc := p.loc
+	fields := p.FieldList()
+	return &ast.FileBlock{Values: fields, Loc: *loc}
 }
 
-func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*ast.Field {
+// FieldList parses a list of fields until a stop token is encountered.
+func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 	fields := make([]*ast.Field, 0)
 
 	for p.lookahead != nil {
-		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
+		// Check for stop tokens to end the field list
+		if len(stopLookahead) > 0 && p.lookahead.Type == stopLookahead[0] {
 			break
 		}
 
@@ -48,43 +67,52 @@ func (p *Parser) FieldList(stop_lookahead ...tokens.TokenType) []*ast.Field {
 		case tokens.COMMENT:
 			p.Expect(tokens.COMMENT)
 			continue
-		case tokens.WORD:
+		case tokens.WORD, tokens.DATE:
 			field := p.Field()
-			fields = append(fields, field)
-		case tokens.DATE:
-			field := p.Field()
-			fields = append(fields, field)
+			if field != nil {
+				fields = append(fields, field)
+			}
 		default:
-			// If the current symbol is not in FIRST(Statement), then it is an ε-production
-			panic(fmt.Sprintf("[Parser] Unexpected Statement: %q, with type of: %s",
-				p.lookahead.Value, p.lookahead.Type))
+			// Handle unexpected token
+			errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
+			err := report.FromToken(p.lookahead, severity.Error, errMsg)
+			p.AddError(err)
+			p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
 		}
 	}
 
 	return fields
 }
 
+// Field parses a single field and returns the corresponding AST node.
 func (p *Parser) Field() *ast.Field {
 	switch p.lookahead.Type {
 	case tokens.WORD, tokens.DATE:
 		return p.ExpressionNode()
 	default:
-		panic(fmt.Sprintf("[Parser] Unexpected Node: %q, with type of: %s",
-			p.lookahead.Value, p.lookahead.Type))
+		errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' when expecting a field"
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+		p.lookahead = p.tokenstream.Next() // Advance to recover
+		return nil
 	}
 }
 
+// ExpressionNode parses an expression node and returns the corresponding AST node.
 func (p *Parser) ExpressionNode() *ast.Field {
 	key := p.Key()
-
-	operator, err := p.Operator()
-	if err != nil {
-		panic(err)
+	if key == nil {
+		return nil
 	}
 
-	value, err := p.Value()
-	if err != nil {
-		panic(err)
+	operator := p.Operator()
+	if operator == nil {
+		return nil
+	}
+
+	value := p.Value()
+	if value == nil {
+		return nil
 	}
 
 	return &ast.Field{
@@ -94,127 +122,238 @@ func (p *Parser) ExpressionNode() *ast.Field {
 	}
 }
 
+// Key parses the key of a field and returns the corresponding token.
 func (p *Parser) Key() *tokens.Token {
+	if p.lookahead == nil {
+		errMsg := "Expected a key, but reached end of input"
+		err := report.FromLoc(*p.loc, severity.Error, errMsg)
+		p.AddError(err)
+		return nil
+	}
+
 	switch p.lookahead.Type {
-	case tokens.WORD:
-		return p.Expect(tokens.WORD)
-	case tokens.DATE:
-		return p.Expect(tokens.DATE)
+	case tokens.WORD, tokens.DATE:
+		return p.Expect(tokens.WORD, tokens.DATE)
 	default:
-		panic(fmt.Sprintf("[Parser] Unexpected Key: %q, with type of: %s",
-			p.lookahead.Value, p.lookahead.Type))
+		errMsg := "Expected a key (WORD or DATE), but found '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+		p.synchronize(tokens.EQUALS, tokens.COMPARISON, tokens.END, tokens.WORD)
+		return nil
 	}
 }
 
-func (p *Parser) Operator() (*tokens.Token, error) {
-	switch p.lookahead.Type {
-	case tokens.EQUALS, tokens.COMPARISON:
-		return p.Expect(p.lookahead.Type), nil
-	default:
-		return nil, fmt.Errorf("expected operator '=', '==', or comparison, got %s", p.lookahead.Type)
+// Operator parses the operator of a field and returns the corresponding token.
+func (p *Parser) Operator() *tokens.Token {
+	if p.lookahead == nil {
+		errMsg := "Expected an operator '=', '==', or comparison, but reached end of input"
+		err := report.FromLoc(*p.loc, severity.Error, errMsg)
+		p.AddError(err)
+		return nil
+	}
+
+	if p.lookahead.Type == tokens.EQUALS || p.lookahead.Type == tokens.COMPARISON {
+		return p.Expect(tokens.EQUALS, tokens.COMPARISON)
+	} else {
+		errMsg := "Expected operator '=', '==', or comparison, but found '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+		p.synchronize(tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL, tokens.START)
+		return nil
 	}
 }
 
-func (p *Parser) Value() (ast.BV, error) {
+// Value parses the value of a field and returns the corresponding AST node.
+func (p *Parser) Value() ast.BV {
+	if p.lookahead == nil {
+		errMsg := "Expected a value, but reached end of input"
+		err := report.FromLoc(*p.loc, severity.Error, errMsg)
+		p.AddError(err)
+		return nil
+	}
+
 	switch p.lookahead.Type {
 	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL:
-		return p.Literal(), nil
+		return p.Literal()
 	case tokens.START:
 		return p.Block()
 	default:
-		return nil, fmt.Errorf("unexpected token %s in Value", p.lookahead.Type)
+		errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in value"
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+		p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
+		return nil
 	}
 }
 
-func (p *Parser) Block() (ast.Block, error) {
+// Block parses a block and returns the corresponding AST node.
+func (p *Parser) Block() ast.Block {
+	if p.lookahead.Type != tokens.START {
+		errMsg := "Expected '{', but found '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+		p.synchronize(tokens.START, tokens.END, tokens.WORD, tokens.DATE)
+		return nil
+	}
+
 	p.Expect(tokens.START)
 	loc := *p.loc
+
+	var block ast.Block
 
 	switch p.lookahead.Type {
 	case tokens.COMMENT:
 		p.Expect(tokens.COMMENT)
 		fallthrough
-	case tokens.WORD:
-		return p.FieldBlock(loc), nil
+	case tokens.WORD, tokens.DATE:
+		block = p.FieldBlock(loc)
 	case tokens.NUMBER, tokens.QUOTED_STRING:
-		return p.TokenBlock(), nil
+		block = p.TokenBlock()
 	default:
-		return nil, fmt.Errorf("unexpected token %s in Block", p.lookahead.Type)
+		errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in block"
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+		p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
+		return nil
 	}
+
+	// Expect closing brace '}'
+	p.Expect(tokens.END)
+
+	return block
 }
 
+// FieldBlock parses a block of fields and returns the corresponding AST node.
 func (p *Parser) FieldBlock(loc tokens.Loc) *ast.FieldBlock {
-	nodes := p.FieldList(tokens.END)
-	p.Expect(tokens.END)
-	return &ast.FieldBlock{Values: nodes, Loc: loc}
+	fields := p.FieldList(tokens.END)
+	return &ast.FieldBlock{Values: fields, Loc: loc}
 }
 
+// TokenBlock parses a block of tokens and returns the corresponding AST node.
 func (p *Parser) TokenBlock() *ast.TokenBlock {
-	nodes := p.TokenList(tokens.END)
-	p.Expect(tokens.END)
-	return &ast.TokenBlock{Values: nodes}
+	tokensList := p.TokenList(tokens.END)
+	return &ast.TokenBlock{Values: tokensList}
 }
 
-func (p *Parser) TokenList(stop_lookahead ...tokens.TokenType) []*tokens.Token {
-	nodes := make([]*tokens.Token, 0)
+// TokenList parses a list of tokens until a stop token is encountered.
+func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
+	tokensList := make([]*tokens.Token, 0)
 
 	for p.lookahead != nil {
-		if len(stop_lookahead) > 0 && p.lookahead.Type == stop_lookahead[0] {
+		// Check for stop tokens to end the token list
+		if len(stopLookahead) > 0 && p.lookahead.Type == stopLookahead[0] {
 			break
 		}
 
 		switch p.lookahead.Type {
 		case tokens.NUMBER, tokens.QUOTED_STRING:
-			node := p.Literal()
-			nodes = append(nodes, node)
+			token := p.Literal()
+			if token != nil {
+				tokensList = append(tokensList, token)
+			}
 		default:
-			// If the current symbol is not in FIRST(Statement), then it is an ε-production
-			panic(fmt.Sprintf("[Parser] Unexpected Statement: %q, with type of: %s",
-				p.lookahead.Value, p.lookahead.Type))
+			// Handle unexpected token
+			errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in token list"
+			err := report.FromToken(p.lookahead, severity.Error, errMsg)
+			p.AddError(err)
+			p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
 		}
 	}
 
-	return nodes
+	return tokensList
 }
 
+// Literal parses a literal token and returns the corresponding token.
 func (p *Parser) Literal() *tokens.Token {
 	switch p.lookahead.Type {
-	case tokens.WORD:
-		return p.Expect(tokens.WORD)
-	case tokens.NUMBER:
-		return p.Expect(tokens.NUMBER)
+	case tokens.WORD, tokens.NUMBER, tokens.BOOL:
+		return p.Expect(p.lookahead.Type)
 	case tokens.QUOTED_STRING:
 		return p.unquoteExpect(tokens.QUOTED_STRING)
-	case tokens.BOOL:
-		return p.Expect(tokens.BOOL)
 	default:
-		panic(fmt.Sprintf("[Parser] Unexpected Literal: %q, with type of: %s",
-			p.lookahead.Value, p.lookahead.Type))
+		errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' as literal"
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+		p.synchronize()
+		return nil
 	}
 }
 
-// checks if the next token is the expected type and returns it
-func (p *Parser) Expect(expectedtype tokens.TokenType) *tokens.Token {
+// unquoteExpect parses a quoted string, unquotes it, and returns the token.
+func (p *Parser) unquoteExpect(expectedType tokens.TokenType) *tokens.Token {
+	token := p.Expect(expectedType)
+	if token == nil {
+		return nil
+	}
+
+	unquotedValue, err := strconv.Unquote(token.Value)
+	if err != nil {
+		errMsg := "Failed to unquote string '" + token.Value + "'"
+		diag := report.FromToken(token, severity.Error, errMsg)
+		p.AddError(diag)
+		// Keep the original value if unquoting fails
+		return token
+	}
+
+	token.Value = unquotedValue
+	return token
+}
+
+// Expect verifies that the current token matches one of the expected types.
+// If it does, it consumes the token and returns it.
+// If not, it reports an error, attempts to recover, and returns nil.
+func (p *Parser) Expect(expectedTypes ...tokens.TokenType) *tokens.Token {
 	token := p.lookahead
 
 	if token == nil {
-		panic("[Parser] Unexpected end of input, expected: " + string(expectedtype))
-	}
-	if token.Type != expectedtype {
-		fmt.Println(p.tokenstream.Cursor)
-		panic("[Parser] Unexpected token: \"" + string(token.Value) + "\" with type of " + string(token.Type) + "\nexpected type: " + string(expectedtype))
+		errMsg := "Unexpected end of input, expected one of: " + formatTokenTypes(expectedTypes)
+		err := report.FromLoc(*p.loc, severity.Error, errMsg)
+		p.AddError(err)
+		return nil
 	}
 
-	p.loc = &token.Loc
-	p.lookahead = p.tokenstream.Next()
+	for _, expectedType := range expectedTypes {
+		if token.Type == expectedType {
+			p.loc = &token.Loc
+			p.lookahead = p.tokenstream.Next()
+			return token
+		}
+	}
 
-	return token
+	// Report unexpected token
+	errMsg := "Unexpected token '" + token.Value + "' of type '" + string(token.Type) + "', expected one of: " + formatTokenTypes(expectedTypes)
+	err := report.FromToken(token, severity.Error, errMsg)
+	p.AddError(err)
+
+	// Attempt to recover by synchronizing
+	p.synchronize(expectedTypes...)
+
+	return nil
 }
 
-func (p *Parser) unquoteExpect(expectedtype tokens.TokenType) *tokens.Token {
-	token := p.Expect(expectedtype)
+// synchronize advances the parser's lookahead until it finds a synchronization token or one of the expected types.
+func (p *Parser) synchronize(expectedTypes ...tokens.TokenType) {
+	for p.lookahead != nil {
+		// If the current token matches any of the expected types, stop synchronizing
+		for _, expectedType := range expectedTypes {
+			if p.lookahead.Type == expectedType {
+				return
+			}
+		}
 
-	token.Value, _ = strconv.Unquote(token.Value)
+		// Otherwise, consume the token and continue synchronizing
+		p.lookahead = p.tokenstream.Next()
+	}
+}
 
-	return token
+// formatTokenTypes formats a slice of TokenType into a readable string.
+func formatTokenTypes(types []tokens.TokenType) string {
+	formatted := ""
+	for i, t := range types {
+		formatted += "'" + string(t) + "'"
+		if i < len(types)-1 {
+			formatted += ", "
+		}
+	}
+	return formatted
 }

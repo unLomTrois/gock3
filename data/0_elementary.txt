@@ -1,6 +1,6 @@
 # Comment outside
 namespace = test
-test.1 = {
+test.1 = {{
 	type = character_event
 	trigger = {
 		scope:character = character.123
