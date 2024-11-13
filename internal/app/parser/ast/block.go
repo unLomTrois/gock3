@@ -1,8 +1,6 @@
 package ast
 
 import (
-	"fmt"
-
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 )
 
@@ -70,7 +68,6 @@ func (fb *FieldBlock) GetFieldsValues(key string) []*tokens.Token {
 	res := make([]*tokens.Token, len(fields))
 
 	for i, field := range fields {
-		fmt.Println(field.Value)
 		res[i] = field.Value.(*tokens.Token)
 	}
 
