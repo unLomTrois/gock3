@@ -36,7 +36,7 @@ func NewProject(vanillaDir string, modFileDescriptor string) (*Project, error) {
 		VanillaDir:        vanillaDir,
 		ModFileDescriptor: modFileDescriptor,
 		Diagnostics:       []*report.DiagnosticItem{},
-		Common:            nil,
+		Common:            data.NewCommon(),
 	}, nil
 }
 
@@ -55,8 +55,7 @@ func (project *Project) Load() {
 
 	fset.Scan(project.VanillaDir)
 
-	// random file
-	log.Println(fset.Files[100].FullPath())
+	project.Common.Load(fset)
 
 	project.Validate()
 }
