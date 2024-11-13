@@ -36,7 +36,7 @@ func NewLexer(entry *files.FileEntry, text []byte) *Lexer {
 
 // NormalizeText trims spaces and converts CRLF to LF
 func NormalizeText(text []byte) []byte {
-	text = bytes.TrimSpace(text)
+	// text = bytes.TrimSpace(text)
 	text = bytes.ReplaceAll(text, []byte("\r\n"), []byte("\n"))
 	return text
 }

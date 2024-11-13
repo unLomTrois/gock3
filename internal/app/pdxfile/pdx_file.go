@@ -81,13 +81,13 @@ func finalize(errs []*report.DiagnosticItem) {
 }
 
 func getErrorLine(fileCache *cache.FileCache, err *report.DiagnosticItem, column uint16) string {
-	line_start := fileCache.GetLine(&err.Pointer.Loc)
-	// fmt.Println(strconv.Quote(lineStart))
+	lineStart := fileCache.GetLine(&err.Pointer.Loc)
 
 	// replace tabs to spaces, because loc sees \t as 4 symbols...
 	// todo: do something
-	spaced_line := strings.ReplaceAll(line_start, "\t", "    ")
+	spacedLine := strings.ReplaceAll(lineStart, "\t", "    ")
 
 	errorEndIndex := column + uint16(err.Pointer.Length) - 1
-	return spaced_line[:errorEndIndex]
+
+	return spacedLine[:errorEndIndex]
 }
