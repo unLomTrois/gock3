@@ -2,6 +2,7 @@
 package parser
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
@@ -38,6 +39,7 @@ func Parse(token_stream *tokens.TokenStream) (*ast.FileBlock, []*report.Diagnost
 	}
 
 	fileBlock := p.fileBlock()
+
 	return fileBlock, p.Errors()
 }
 
@@ -67,14 +69,14 @@ func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 		case tokens.COMMENT:
 			p.Expect(tokens.COMMENT)
 			continue
-		case tokens.WORD, tokens.DATE:
+		case tokens.WORD, tokens.DATE, tokens.NUMBER:
 			field := p.Field()
 			if field != nil {
 				fields = append(fields, field)
 			}
 		default:
 			// Handle unexpected token
-			errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
+			errMsg := "[FieldList] Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
 			err := report.FromToken(p.lookahead, severity.Error, errMsg)
 			p.AddError(err)
 			p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
@@ -87,7 +89,7 @@ func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 // Field parses a single field and returns the corresponding AST node.
 func (p *Parser) Field() *ast.Field {
 	switch p.lookahead.Type {
-	case tokens.WORD, tokens.DATE:
+	case tokens.WORD, tokens.DATE, tokens.NUMBER:
 		return p.ExpressionNode()
 	default:
 		errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' when expecting a field"
@@ -132,8 +134,8 @@ func (p *Parser) Key() *tokens.Token {
 	}
 
 	switch p.lookahead.Type {
-	case tokens.WORD, tokens.DATE:
-		return p.Expect(tokens.WORD, tokens.DATE)
+	case tokens.WORD, tokens.DATE, tokens.NUMBER:
+		return p.Expect(tokens.WORD, tokens.DATE, tokens.NUMBER)
 	default:
 		errMsg := "Expected a key (WORD or DATE), but found '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
 		err := report.FromToken(p.lookahead, severity.Error, errMsg)
@@ -199,6 +201,11 @@ func (p *Parser) Block() ast.Block {
 	p.Expect(tokens.START)
 	loc := *p.loc
 
+	if p.lookahead.Type == tokens.END {
+		p.Expect(tokens.END)
+		return &ast.FieldBlock{Values: []*ast.Field{}, Loc: loc}
+	}
+
 	var block ast.Block
 
 	switch p.lookahead.Type {
@@ -207,10 +214,17 @@ func (p *Parser) Block() ast.Block {
 		fallthrough
 	case tokens.WORD, tokens.DATE:
 		block = p.FieldBlock(loc)
+		// case tokens.QUOTED_STRING:
 	case tokens.NUMBER, tokens.QUOTED_STRING:
+		if p.tokenstream.Peek().Type == tokens.EQUALS {
+			log.Println("WORKS")
+			block = p.FieldBlock(loc)
+			break
+		}
+
 		block = p.TokenBlock()
 	default:
-		errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in block"
+		errMsg := "[Block] Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in block"
 		err := report.FromToken(p.lookahead, severity.Error, errMsg)
 		p.AddError(err)
 		p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
@@ -231,6 +245,7 @@ func (p *Parser) FieldBlock(loc tokens.Loc) *ast.FieldBlock {
 
 // TokenBlock parses a block of tokens and returns the corresponding AST node.
 func (p *Parser) TokenBlock() *ast.TokenBlock {
+	log.Println("TokenBlock")
 	tokensList := p.TokenList(tokens.END)
 	return &ast.TokenBlock{Values: tokensList}
 }
@@ -253,7 +268,7 @@ func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 			}
 		default:
 			// Handle unexpected token
-			errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in token list"
+			errMsg := "[TokenList] Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in token list"
 			err := report.FromToken(p.lookahead, severity.Error, errMsg)
 			p.AddError(err)
 			p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
@@ -337,7 +352,7 @@ func (p *Parser) synchronize(expectedTypes ...tokens.TokenType) {
 		// If the current token matches any of the expected types, stop synchronizing
 		for _, expectedType := range expectedTypes {
 			if p.lookahead.Type == expectedType {
-				return
+				p.Expect(expectedType)
 			}
 		}
 
