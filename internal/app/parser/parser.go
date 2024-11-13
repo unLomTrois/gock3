@@ -154,9 +154,17 @@ func (p *Parser) Operator() *tokens.Token {
 		return nil
 	}
 
-	if p.lookahead.Type == tokens.EQUALS || p.lookahead.Type == tokens.COMPARISON {
-		return p.Expect(tokens.EQUALS, tokens.COMPARISON)
-	} else {
+	// QUESTION_EQUALS
+
+	switch p.lookahead.Type {
+	case tokens.QUESTION_EQUALS:
+		return p.Expect(tokens.QUESTION_EQUALS)
+	case tokens.EQUALS:
+		return p.Expect(tokens.EQUALS)
+	case tokens.COMPARISON:
+		return p.Expect(tokens.COMPARISON)
+
+	default:
 		errMsg := "Expected operator '=', '==', or comparison, but found '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "'"
 		err := report.FromToken(p.lookahead, severity.Error, errMsg)
 		p.AddError(err)

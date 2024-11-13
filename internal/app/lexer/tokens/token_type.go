@@ -10,6 +10,7 @@ const (
 	BOOL
 	NEXTLINE
 	EQUALS
+	QUESTION_EQUALS
 	START
 	END
 	WHITESPACE
@@ -19,19 +20,20 @@ const (
 )
 
 var TokenTypeRegexMap = map[TokenType]string{
-	COMMENT:       `^#(.+)?`,
-	WORD:          `^@?(?:[\w-]+:)?[\w.-]+`,
-	QUOTED_STRING: `^"(.*?)"`,
-	NUMBER:        `^-?\d+([.,]\d+)?`,
-	BOOL:          `^(yes|no)`,
-	NEXTLINE:      `^\n`,
-	EQUALS:        `^==?`,
-	START:         `^{`,
-	END:           `^}`,
-	WHITESPACE:    `^\s`,
-	TAB:           `^\t`,
-	COMPARISON:    `^[\<\>]=?`,
-	DATE:          `^\d+\.\d{1,2}\.\d{1,2}`,
+	COMMENT:         `^#(.+)?`,
+	WORD:            `^@?(?:[\w-]+:)?[\w.-]+`,
+	QUOTED_STRING:   `^"(.*?)"`,
+	NUMBER:          `^-?\d+([.,]\d+)?`,
+	BOOL:            `^(yes|no)`,
+	NEXTLINE:        `^\n`,
+	EQUALS:          `^==?`,
+	QUESTION_EQUALS: `^\?=`,
+	START:           `^{`,
+	END:             `^}`,
+	WHITESPACE:      `^\s`,
+	TAB:             `^\t`,
+	COMPARISON:      `^[\<\>]=?`,
+	DATE:            `^\d+\.\d{1,2}\.\d{1,2}`,
 }
 
 // TokenCheckOrder defines the order in which tokens should be checked
@@ -46,6 +48,7 @@ var TokenCheckOrder = []TokenType{
 	DATE,
 	NUMBER,
 	WORD,
+	QUESTION_EQUALS,
 	EQUALS,
 	START,
 	END,
@@ -67,6 +70,8 @@ func (tt TokenType) String() string {
 		return "NEXTLINE"
 	case EQUALS:
 		return "EQUALS"
+	case QUESTION_EQUALS:
+		return "QUESTION_EQUALS"
 	case START:
 		return "START"
 	case END:
