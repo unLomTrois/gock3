@@ -1,4 +1,4 @@
-@pos_compat_high = 30
+﻿@pos_compat_high = 30
 @pos_compat_medium = 15
 @pos_compat_low = 5
 
@@ -10,6 +10,15 @@
 education_intrigue_1 = {
 	color = { 255 100 0 }
 	based = { "Cringe" }
+
+	track = {
+		50 = {
+			something = 1
+		}
+		100 = {
+			# empty
+		}
+	}
 
 	minimum_age = 16
 	intrigue = 2
