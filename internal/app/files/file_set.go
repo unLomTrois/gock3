@@ -61,9 +61,9 @@ func (fset *FileSet) Scan(path string) error {
 			return nil
 		}
 
-		file_entry := NewFileEntry(subpath, Mod)
+		fileEntry := NewFileEntry(subpath, Mod)
 
-		fset.Files = append(fset.Files, file_entry)
+		fset.Files = append(fset.Files, fileEntry)
 
 		return nil
 	})
