@@ -2,7 +2,6 @@ package pdxfile
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/fatih/color"
@@ -17,7 +16,7 @@ import (
 )
 
 func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
-	content, err := os.ReadFile(entry.FullPath())
+	content, err := utils.ReadFileWithUTF8BOM(entry.FullPath())
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)
 	}
