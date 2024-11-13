@@ -1,29 +1,36 @@
 package tokens
 
 type TokenStream struct {
-	Stream []*Token
-	Cursor int
+	tokens   []*Token
+	position int
 }
 
 func NewTokenStream() *TokenStream {
 	return &TokenStream{
-		Stream: []*Token{},
-		Cursor: 0,
+		tokens:   []*Token{},
+		position: 0,
 	}
 }
 
 func (ts *TokenStream) Push(token *Token) *TokenStream {
-	ts.Stream = append(ts.Stream, token)
+	ts.tokens = append(ts.tokens, token)
 
 	return ts
 }
 
 func (ts *TokenStream) Next() *Token {
-	if ts.Cursor >= len(ts.Stream) {
+	if ts.position >= len(ts.tokens) {
 		return nil
 	}
-	token := ts.Stream[ts.Cursor]
-	ts.Cursor++
+	token := ts.tokens[ts.position]
+	ts.position++
 
 	return token
+}
+
+func (ts *TokenStream) Peek() *Token {
+	if ts.position < len(ts.tokens) {
+		return ts.tokens[ts.position]
+	}
+	return nil
 }
