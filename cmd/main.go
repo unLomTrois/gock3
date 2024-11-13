@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
+
 	if err := root(os.Args); err != nil {
 		log.Fatalf("Error: %v", err)
 	}

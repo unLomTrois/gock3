@@ -2,6 +2,7 @@ package files
 
 import (
 	"io/fs"
+	"log"
 	"path/filepath"
 	"strings"
 )
@@ -34,6 +35,8 @@ func NewModLoader(modRoot string, replacePaths []string) *ModLoader {
 }
 
 func (fset *FileSet) Scan(path string) error {
+	log.Println("Scanning", path)
+
 	cleanReplacePaths := make([]string, 0, len(fset.ModLoader.ReplacePaths))
 	for _, replacePath := range fset.ModLoader.ReplacePaths {
 		cleanReplacePaths = append(cleanReplacePaths, filepath.Clean(replacePath))
@@ -64,6 +67,8 @@ func (fset *FileSet) Scan(path string) error {
 
 		return nil
 	})
+
+	log.Println("Found", len(fset.Files), "files")
 
 	return err
 }

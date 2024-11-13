@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -39,36 +40,25 @@ func NewProject(vanillaDir string, modFileDescriptor string) (*Project, error) {
 	}, nil
 }
 
-func (p *Project) Load() {
-	mod := p.LoadMod()
+func (project *Project) Load() {
+	mod := project.LoadMod()
 
 	replacePaths := make([]string, len(mod.ReplacePaths))
 	for i, token := range mod.ReplacePaths {
 		replacePaths[i] = token.Value
 	}
 
-	fmt.Println("mod path", mod.Path)
+	log.Println("mod path", mod.Path)
 
-	mod_loader := files.NewModLoader(mod.Path.Value, replacePaths)
-	fset := files.NewFileSet(p.VanillaDir, mod_loader)
+	modLoader := files.NewModLoader(mod.Path.Value, replacePaths)
+	fset := files.NewFileSet(project.VanillaDir, modLoader)
 
-	fset.Scan(p.VanillaDir)
+	fset.Scan(project.VanillaDir)
 
-	fmt.Println(len(fset.Files))
+	// random file
+	log.Println(fset.Files[100].FullPath())
 
-	fmt.Println(fset.Files[1000].FullPath())
-
-	// err := fset.Scan("C:/Users/vadim/Documents/Paradox Interactive/Crusader Kings III/mod/T4N-CK3/T4N/common/traits")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	p.Validate()
-
-	// replace_paths := []string{}
-
-	// mod_loader := files.NewModLoader(p.ModFileDescriptor, replace_paths)
-
+	project.Validate()
 }
 
 func (p *Project) LoadMod() *ModFile {
