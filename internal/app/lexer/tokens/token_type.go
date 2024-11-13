@@ -24,7 +24,7 @@ var TokenTypeRegexMap = map[TokenType]string{
 	WORD:            `^@?(?:[\w-]+:)?[\w.-]+`,
 	QUOTED_STRING:   `^"(.*?)"`,
 	NUMBER:          `^-?\d+([.,]\d+)?`,
-	BOOL:            `^(yes|no)`,
+	BOOL:            `^(yes|no)\b`,
 	NEXTLINE:        `^\n`,
 	EQUALS:          `^==?`,
 	QUESTION_EQUALS: `^\?=`,
