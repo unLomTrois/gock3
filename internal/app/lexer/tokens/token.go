@@ -29,3 +29,13 @@ func (t *Token) String() string {
 func (t *Token) IsType(input TokenType) bool {
 	return t.Type == input
 }
+
+// check if token value is value
+func (t *Token) Is(value string) bool {
+	return t.Value == value
+}
+
+// float value
+func (t *Token) FloatValue() (float64, error) {
+	return strconv.ParseFloat(t.Value, 64)
+}

@@ -6,11 +6,9 @@ import (
 	"strings"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
-	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
 	"github.com/unLomTrois/gock3/pkg/report"
-	"github.com/unLomTrois/gock3/pkg/validator"
 )
 
 type Traits struct {
@@ -97,25 +95,4 @@ func (traits *Traits) parseTraits(block *ast.FieldBlock) ([]*Trait, []*report.Di
 	}
 
 	return traitEntries, problems
-}
-
-type Trait struct {
-	key   *tokens.Token
-	block *ast.FieldBlock
-}
-
-func NewTraitFromAST(key *tokens.Token, block *ast.FieldBlock) *Trait {
-	return &Trait{
-		key:   key,
-		block: block,
-	}
-}
-
-func (trait *Trait) Validate() []*report.DiagnosticItem {
-	fields := validator.NewBlockValidator(trait.block)
-	fields.ExpectNumber("minimum_age")
-	fields.ExpectNumber("maximum_age")
-	fields.ExpectNumber("intrigue")
-
-	return fields.Errors()
 }

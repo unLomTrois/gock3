@@ -3,6 +3,7 @@ package validator
 import (
 	"fmt"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/pkg/report"
@@ -63,12 +64,60 @@ func (bv *BlockValidator) ExpectToken(key string) *tokens.Token {
 
 	token, ok := field.Value.(*tokens.Token)
 	if !ok {
-		err := report.FromToken(token, severity.Error, "expected a token, not a block")
+		err := report.FromLoc(field.Key.Loc, severity.Error, "expected a token, not a block")
 		bv.AddError(err)
 		return nil
 	}
 
 	return token
+}
+
+// expect value to be, i.e. token.Value ==
+func (bv *BlockValidator) ExpectValueToBe(key string, value string) bool {
+	token := bv.ExpectToken(key)
+	if token == nil {
+		return false
+	}
+	return token.Is(value)
+}
+
+// expect value to be, i.e. token.Value ==
+func (bv *BlockValidator) ExpectValueToBeInSet(key string, set mapset.Set[string]) bool {
+	token := bv.ExpectToken(key)
+	if token == nil {
+		return false
+	}
+
+	ok := set.Contains(token.Value)
+	if !ok {
+		err := report.FromToken(token, severity.Error, fmt.Sprintf("expected one of %v", set))
+		bv.AddError(err)
+	}
+
+	return ok
+}
+
+// ExpectNumber checks that there is a field with a certain key whose value is a token and which type is a number
+func (bv *BlockValidator) ExpectType(key string, tt tokens.TokenType) (*tokens.Token, bool) {
+	token := bv.ExpectToken(key)
+	if token == nil {
+		return nil, false
+	}
+
+	ok := token.IsType(tt)
+	if !ok {
+		err := report.FromToken(token, severity.Error, fmt.Sprintf("expected type %s", tt))
+		bv.AddError(err)
+	}
+
+	return token, ok
+}
+
+// is bool
+func (bv *BlockValidator) ExpectBool(key string) (*tokens.Token, bool) {
+	token, ok := bv.ExpectType(key, tokens.BOOL)
+
+	return token, ok
 }
 
 // ExpectNumber checks that there is a field with a certain key whose value is a token and which type is a number
@@ -109,4 +158,35 @@ func (bv *BlockValidator) RequireField(key string) bool {
 		bv.AddError(err)
 	}
 	return exists
+}
+
+// number in range (float)
+func (bv *BlockValidator) ExpectNumberInRange(key string, min float64, max float64) bool {
+	token, ok := bv.ExpectType(key, tokens.NUMBER)
+	if !ok {
+		return false
+	}
+
+	value, err := token.FloatValue()
+	if err != nil {
+		err := report.FromToken(token, severity.Error, "expected a number")
+		bv.AddError(err)
+		return false
+	}
+	if value < min || value > max {
+		err := report.FromToken(token, severity.Error, fmt.Sprintf("expected number in range [%f, %f]", min, max))
+		bv.AddError(err)
+		return false
+	}
+
+	return true
+}
+
+// ban field
+func (bv *BlockValidator) BanField(key string, because string) {
+	_, exists := bv.fields[key]
+	if exists {
+		err := report.FromBlock(bv.block, severity.Error, fmt.Sprintf("field '%s' is not allowed, because %s", key, because))
+		bv.AddError(err)
+	}
 }
