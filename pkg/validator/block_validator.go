@@ -15,24 +15,29 @@ type BlockValidator struct {
 	*report.ErrorManager
 }
 
+// NewBlockValidator creates a new instance of BlockValidator for the given FieldBlock.
+// It initializes the fields map by converting the block's values into a map
+// for efficient key-based lookups and sets up an ErrorManager for reporting validation errors.
+//
+// Parameters:
+//   - block: A pointer to the FieldBlock containing fields to validate.
+//
+// Returns:
+//   - A pointer to the newly created BlockValidator instance.
 func NewBlockValidator(block *ast.FieldBlock) *BlockValidator {
-	bv := &BlockValidator{
+	fields := make(map[string]*ast.Field, len(block.Values))
+	for _, field := range block.Values {
+		fields[field.Key.Value] = field
+	}
+
+	return &BlockValidator{
 		block:        block,
-		fields:       make(map[string]*ast.Field),
+		fields:       fields,
 		ErrorManager: report.NewErrorManager(),
 	}
-	bv.buildFieldMap()
-	return bv
 }
 
-func (bv *BlockValidator) buildFieldMap() {
-	for _, field := range bv.block.Values {
-		key := field.Key.Value
-
-		bv.fields[key] = field
-	}
-}
-
+// ExpectBlock checks that there is a field with a certain key whose value is a block.
 func (bv *BlockValidator) ExpectBlock(key string) ast.Block {
 	field, exists := bv.fields[key]
 	if !exists {
@@ -41,12 +46,15 @@ func (bv *BlockValidator) ExpectBlock(key string) ast.Block {
 
 	block, ok := field.Value.(ast.Block)
 	if !ok {
+		err := report.FromToken(field.Key, severity.Error, "expected a block, not a token")
+		bv.AddError(err)
 		return nil
 	}
 
 	return block
 }
 
+// ExpectToken checks that there is a field with a certain key whose value is a token.
 func (bv *BlockValidator) ExpectToken(key string) *tokens.Token {
 	field, exists := bv.fields[key]
 	if !exists {
@@ -57,14 +65,14 @@ func (bv *BlockValidator) ExpectToken(key string) *tokens.Token {
 	if !ok {
 		err := report.FromToken(token, severity.Error, "expected a token, not a block")
 		bv.AddError(err)
-
 		return nil
 	}
 
 	return token
 }
 
-func (bv *BlockValidator) ExpectInteger(key string) bool {
+// ExpectNumber checks that there is a field with a certain key whose value is a token and which type is a number
+func (bv *BlockValidator) ExpectNumber(key string) bool {
 	token := bv.ExpectToken(key)
 	if token == nil {
 		return false
@@ -72,7 +80,7 @@ func (bv *BlockValidator) ExpectInteger(key string) bool {
 
 	ok := token.IsType(tokens.NUMBER)
 	if !ok {
-		err := report.FromToken(token, severity.Error, "expected integer")
+		err := report.FromToken(token, severity.Error, "expected a number")
 		bv.AddError(err)
 	}
 
@@ -95,10 +103,10 @@ func (bv *BlockValidator) ExpectString(key string) bool {
 }
 
 func (bv *BlockValidator) RequireField(key string) bool {
-	if _, exists := bv.fields[key]; !exists {
+	_, exists := bv.fields[key]
+	if !exists {
 		err := report.FromBlock(bv.block, severity.Error, fmt.Sprintf("required field '%s' is missing", key))
 		bv.AddError(err)
-		return false
 	}
-	return true
+	return exists
 }

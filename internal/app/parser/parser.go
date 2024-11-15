@@ -2,7 +2,6 @@
 package parser
 
 import (
-	"log"
 	"strconv"
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
@@ -221,11 +220,16 @@ func (p *Parser) Block() ast.Block {
 		p.Expect(tokens.COMMENT)
 		fallthrough
 	case tokens.WORD, tokens.DATE:
+		peek := p.tokenstream.Peek()
+		if peek.Type != tokens.EQUALS && peek.Type != tokens.QUESTION_EQUALS {
+			block = p.TokenBlock()
+			break
+		}
+
 		block = p.FieldBlock(loc)
 		// case tokens.QUOTED_STRING:
 	case tokens.NUMBER, tokens.QUOTED_STRING:
 		if p.tokenstream.Peek().Type == tokens.EQUALS {
-			log.Println("WORKS")
 			block = p.FieldBlock(loc)
 			break
 		}
@@ -253,7 +257,6 @@ func (p *Parser) FieldBlock(loc tokens.Loc) *ast.FieldBlock {
 
 // TokenBlock parses a block of tokens and returns the corresponding AST node.
 func (p *Parser) TokenBlock() *ast.TokenBlock {
-	log.Println("TokenBlock")
 	tokensList := p.TokenList(tokens.END)
 	return &ast.TokenBlock{Values: tokensList}
 }
@@ -269,7 +272,7 @@ func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 		}
 
 		switch p.lookahead.Type {
-		case tokens.NUMBER, tokens.QUOTED_STRING:
+		case tokens.NUMBER, tokens.QUOTED_STRING, tokens.WORD:
 			token := p.Literal()
 			if token != nil {
 				tokensList = append(tokensList, token)

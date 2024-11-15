@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
+	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
 	"github.com/unLomTrois/gock3/pkg/report"
@@ -14,88 +15,107 @@ import (
 
 type Traits struct {
 	Traits []*Trait
+	ast    *ast.AST
 }
 
 func NewTraits() *Traits {
 	return &Traits{
 		Traits: []*Trait{},
+		ast:    &ast.AST{},
 	}
 }
 
 // Folder returns the folder path for traits, using the correct
 // path separator for the operating system.
-// On Windows, it returns "common\\traits", and on Linux, "common/traits".
 func (t *Traits) Folder() string {
 	return filepath.Join("common", "traits")
 }
 
 func (traits *Traits) Load(fileEntries []*files.FileEntry) {
-	var traitFiles []*files.FileEntry
+	traitFiles := traits.filterTraitFiles(fileEntries)
 
+	log.Printf("Found %d files", len(traitFiles))
+	if len(traitFiles) > 0 {
+		log.Println(traitFiles[0].FullPath())
+	}
+
+	var problems []*report.DiagnosticItem
+
+	for _, file := range traitFiles {
+		ast := traits.loadFile(file)
+		if ast == nil {
+			continue
+		}
+
+		traitEntries, diagnostics := traits.parseTraits(ast.Block)
+		traits.Traits = append(traits.Traits, traitEntries...)
+		problems = append(problems, diagnostics...)
+	}
+
+	log.Printf("Found %d traits", len(traits.Traits))
+	log.Printf("%d problems", len(problems))
+}
+
+func (traits *Traits) filterTraitFiles(fileEntries []*files.FileEntry) []*files.FileEntry {
+	traitFiles := make([]*files.FileEntry, 0, len(fileEntries))
 	for _, fileEntry := range fileEntries {
-		fullpath := fileEntry.FullPath()
-		if strings.Contains(fullpath, traits.Folder()) {
+		if strings.Contains(fileEntry.FullPath(), traits.Folder()) {
 			traitFiles = append(traitFiles, fileEntry)
 		}
 	}
-
-	log.Println("Found", len(traitFiles), "files")
-	log.Println(traitFiles[0].FullPath())
-
-	for _, entry := range traitFiles {
-		ast := traits.LoadFile(entry)
-		trait := NewTraitFromAST(ast)
-		trait.Validate()
-	}
+	return traitFiles
 }
 
-func (traits *Traits) LoadFile(fileEntry *files.FileEntry) *ast.AST {
-	AST, err := pdxfile.ParseFile(fileEntry)
+func (traits *Traits) loadFile(fileEntry *files.FileEntry) *ast.AST {
+	ast, err := pdxfile.ParseFile(fileEntry)
 	if err != nil {
+		log.Printf("Failed to parse file %s: %v", fileEntry.FullPath(), err)
 		return nil
 	}
-	return AST
+	return ast
+}
+
+func (traits *Traits) parseTraits(block *ast.FieldBlock) ([]*Trait, []*report.DiagnosticItem) {
+	var traitEntries []*Trait
+	var problems []*report.DiagnosticItem
+
+	for _, field := range block.Values {
+		// Skip variables
+		if strings.Contains(field.Key.Value, "@") {
+			continue
+		}
+
+		key := field.Key
+		block, ok := field.Value.(*ast.FieldBlock)
+		if !ok {
+			continue
+		}
+
+		trait := NewTraitFromAST(key, block)
+		problems = append(problems, trait.Validate()...)
+		traitEntries = append(traitEntries, trait)
+	}
+
+	return traitEntries, problems
 }
 
 type Trait struct {
-	ast *ast.AST
+	key   *tokens.Token
+	block *ast.FieldBlock
 }
 
-func NewTraitFromAST(ast *ast.AST) *Trait {
+func NewTraitFromAST(key *tokens.Token, block *ast.FieldBlock) *Trait {
 	return &Trait{
-		ast: ast,
+		key:   key,
+		block: block,
 	}
 }
 
 func (trait *Trait) Validate() []*report.DiagnosticItem {
-	diagnostics := make([]*report.DiagnosticItem, 0)
+	fields := validator.NewBlockValidator(trait.block)
+	fields.ExpectNumber("minimum_age")
+	fields.ExpectNumber("maximum_age")
+	fields.ExpectNumber("intrigue")
 
-	fields := validator.NewBlockValidator(trait.ast.Block)
-
-	// Check for required fields
-	// fields.RequireField("version")
-	// fields.RequireField("name")
-	// fields.RequireField("path")
-
-	// // Check types of fields (if they exist)
-	// fields.ExpectString("version")
-	// fields.ExpectString("name")
-	// fields.ExpectString("path")
-
-	// // Optional fields: only check types if they are present
-	// fields.ExpectString("supported_version")
-	// fields.ExpectString("picture")
-
-	diagnostics = append(diagnostics, fields.Errors()...)
-
-	// // validate token block
-	// tags := trait.ast.Block.GetTokenBlock("tags")
-
-	// tag_validator := validator.NewTokenValidator(tags)
-	// tag_validator.ExpectAllTokensToBe(tokens.QUOTED_STRING)
-
-	// diagnostics = append(diagnostics, tag_validator.Errors()...)
-
-	return diagnostics
-
+	return fields.Errors()
 }
