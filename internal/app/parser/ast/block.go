@@ -125,3 +125,9 @@ type TokenBlock struct {
 
 func (tb *TokenBlock) IsBlock() {}
 func (tb *TokenBlock) IsBV()    {}
+
+type EmptyValue struct {
+	Loc tokens.Loc `json:"-"`
+}
+
+func (ev EmptyValue) IsBV() {}

@@ -177,11 +177,6 @@ func (p *Parser) Operator() *tokens.Token {
 	}
 }
 
-type Empty struct {
-}
-
-func (e Empty) IsBV() {}
-
 // Value parses the value of a field and returns the corresponding AST node.
 func (p *Parser) Value() ast.BV {
 	if p.lookahead == nil {
@@ -194,7 +189,7 @@ func (p *Parser) Value() ast.BV {
 	switch p.lookahead.Type {
 	case tokens.NEXTLINE:
 		p.Expect(tokens.NEXTLINE)
-		return Empty{}
+		return p.EmptyValue()
 	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL:
 		return p.Literal()
 	case tokens.START:
@@ -326,6 +321,12 @@ func (p *Parser) Literal() *tokens.Token {
 		p.AddError(err)
 		p.synchronize()
 		return nil
+	}
+}
+
+func (p *Parser) EmptyValue() ast.BV {
+	return ast.EmptyValue{
+		Loc: *p.loc,
 	}
 }
 
