@@ -30,4 +30,5 @@ configs/*.json
 .vscode
 
 tmp
-cmd/tokenstream.json
+
+**/tokenstream.json
