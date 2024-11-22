@@ -12,6 +12,8 @@ import (
 	"github.com/unLomTrois/gock3/pkg/report/severity"
 )
 
+// 1. Package-level types and functions
+
 // Parser represents the parser with its current state and error manager.
 type Parser struct {
 	tokenstream *tokens.TokenStream
@@ -43,6 +45,79 @@ func Parse(token_stream *tokens.TokenStream) (*ast.FileBlock, []*report.Diagnost
 
 	return fileBlock, p.Errors()
 }
+
+// 2. Core parser methods
+
+// Expect verifies that the current token matches one of the expected types.
+// If it does, it consumes the token and returns it.
+// If not, it reports an error, attempts to recover, and returns nil.
+func (p *Parser) Expect(expectedTypes ...tokens.TokenType) *tokens.Token {
+	token := p.lookahead
+
+	if token == nil {
+		errMsg := fmt.Sprintf(errUnexpectedEOF, formatTokenTypes(expectedTypes))
+		err := report.FromLoc(*p.loc, severity.Error, errMsg)
+		p.AddError(err)
+		return nil
+	}
+
+	// Check if current token matches any expected type
+	for _, expectedType := range expectedTypes {
+		if token.Type == expectedType {
+			p.loc = &token.Loc
+			p.lookahead = p.tokenstream.Next()
+			return token
+		}
+	}
+
+	// Token didn't match - report error and try to recover
+	errMsg := fmt.Sprintf(errUnexpectedToken,
+		token.Value,
+		token.Type,
+		formatTokenTypes(expectedTypes),
+	)
+	err := report.FromToken(token, severity.Error, errMsg)
+	p.AddError(err)
+
+	// Create a recovery point based on the expected types
+	recoveryPoint := RecoveryPoint{
+		TokenTypes: expectedTypes,
+		Context:    "expected " + formatTokenTypes(expectedTypes),
+	}
+
+	// Attempt to recover
+	if nextToken, recovered := p.synchronize(recoveryPoint); recovered {
+		p.lookahead = nextToken
+		// Don't recursively call Expect - just return nil to indicate failure
+		// but successful recovery
+		return nil
+	}
+
+	// Recovery failed
+	return nil
+}
+
+// unquoteExpect parses a quoted string, unquotes it, and returns the token.
+func (p *Parser) unquoteExpect(expectedType tokens.TokenType) *tokens.Token {
+	token := p.Expect(expectedType)
+	if token == nil {
+		return nil
+	}
+
+	unquotedValue, err := strconv.Unquote(token.Value)
+	if err != nil {
+		errMsg := fmt.Sprintf(errFailedUnquoteString, token.Value)
+		diag := report.FromToken(token, severity.Error, errMsg)
+		p.AddError(diag)
+		// Keep the original value if unquoting fails
+		return token
+	}
+
+	token.Value = unquotedValue
+	return token
+}
+
+// 3. High-level parsing methods
 
 // fileBlock parses the entire file and constructs the AST's FileBlock.
 func (p *Parser) fileBlock() *ast.FileBlock {
@@ -133,6 +208,8 @@ func (p *Parser) ExpressionNode() *ast.Field {
 	}
 }
 
+// 4. Node-specific parsing methods
+
 // Key parses the key of a field and returns the corresponding token.
 func (p *Parser) Key() *tokens.Token {
 	if p.lookahead == nil {
@@ -212,6 +289,59 @@ func (p *Parser) Value() ast.BV {
 		return nil
 	}
 }
+
+// EmptyValue returns an empty value AST node.
+func (p *Parser) EmptyValue() ast.BV {
+	return ast.EmptyValue{
+		Loc: *p.loc,
+	}
+}
+
+// Literal parses a literal token and returns the corresponding token.
+func (p *Parser) Literal() *tokens.Token {
+	if p.lookahead == nil {
+		err := report.FromLoc(*p.loc, severity.Error, errLiteralExpectedEOF)
+		p.AddError(err)
+		return nil
+	}
+
+	switch p.lookahead.Type {
+	case tokens.WORD, tokens.NUMBER, tokens.BOOL:
+		if token := p.Expect(p.lookahead.Type); token != nil {
+			return token
+		}
+		// If Expect failed (shouldn't normally happen), try recovery
+
+	case tokens.QUOTED_STRING:
+		if token := p.unquoteExpect(tokens.QUOTED_STRING); token != nil {
+			return token
+		}
+		// If unquoteExpect failed, try recovery
+
+	default:
+		errMsg := fmt.Sprintf(errLiteralUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
+		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		p.AddError(err)
+	}
+
+	// Attempt recovery for any failure case
+	if token, recovered := p.synchronize(LiteralRecovery); recovered {
+		p.lookahead = token
+		// Try parsing literal again from recovery point
+		// But only try once to avoid potential infinite recursion
+		if isLiteralType(token.Type) {
+			return p.Literal()
+		}
+		// If recovered to a non-literal token, give up
+		errMsg := fmt.Sprintf(errRecoveredNonLiteralToken, token.Value, token.Type)
+		err := report.FromToken(token, severity.Error, errMsg)
+		p.AddError(err)
+	}
+
+	return nil
+}
+
+// 5. Block-related methods
 
 // Block parses a block and returns the corresponding AST node.
 func (p *Parser) Block() ast.Block {
@@ -315,51 +445,9 @@ func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 	return tokensList
 }
 
-// Literal parses a literal token and returns the corresponding token.
-func (p *Parser) Literal() *tokens.Token {
-	if p.lookahead == nil {
-		err := report.FromLoc(*p.loc, severity.Error, errLiteralExpectedEOF)
-		p.AddError(err)
-		return nil
-	}
+// 6. Helper functions
 
-	switch p.lookahead.Type {
-	case tokens.WORD, tokens.NUMBER, tokens.BOOL:
-		if token := p.Expect(p.lookahead.Type); token != nil {
-			return token
-		}
-		// If Expect failed (shouldn't normally happen), try recovery
-
-	case tokens.QUOTED_STRING:
-		if token := p.unquoteExpect(tokens.QUOTED_STRING); token != nil {
-			return token
-		}
-		// If unquoteExpect failed, try recovery
-
-	default:
-		errMsg := fmt.Sprintf(errLiteralUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
-		err := report.FromToken(p.lookahead, severity.Error, errMsg)
-		p.AddError(err)
-	}
-
-	// Attempt recovery for any failure case
-	if token, recovered := p.synchronize(LiteralRecovery); recovered {
-		p.lookahead = token
-		// Try parsing literal again from recovery point
-		// But only try once to avoid potential infinite recursion
-		if isLiteralType(token.Type) {
-			return p.Literal()
-		}
-		// If recovered to a non-literal token, give up
-		errMsg := fmt.Sprintf(errRecoveredNonLiteralToken, token.Value, token.Type)
-		err := report.FromToken(token, severity.Error, errMsg)
-		p.AddError(err)
-	}
-
-	return nil
-}
-
-// isLiteralType checks if a token type represents a literal value
+// isLiteralType checks if a token type represents a literal value.
 func isLiteralType(tokenType tokens.TokenType) bool {
 	switch tokenType {
 	case tokens.WORD, tokens.NUMBER, tokens.BOOL, tokens.QUOTED_STRING:
@@ -367,81 +455,6 @@ func isLiteralType(tokenType tokens.TokenType) bool {
 	default:
 		return false
 	}
-}
-
-func (p *Parser) EmptyValue() ast.BV {
-	return ast.EmptyValue{
-		Loc: *p.loc,
-	}
-}
-
-// unquoteExpect parses a quoted string, unquotes it, and returns the token.
-func (p *Parser) unquoteExpect(expectedType tokens.TokenType) *tokens.Token {
-	token := p.Expect(expectedType)
-	if token == nil {
-		return nil
-	}
-
-	unquotedValue, err := strconv.Unquote(token.Value)
-	if err != nil {
-		errMsg := fmt.Sprintf(errFailedUnquoteString, token.Value)
-		diag := report.FromToken(token, severity.Error, errMsg)
-		p.AddError(diag)
-		// Keep the original value if unquoting fails
-		return token
-	}
-
-	token.Value = unquotedValue
-	return token
-}
-
-// Expect verifies that the current token matches one of the expected types.
-// If it does, it consumes the token and returns it.
-// If not, it reports an error, attempts to recover, and returns nil.
-func (p *Parser) Expect(expectedTypes ...tokens.TokenType) *tokens.Token {
-	token := p.lookahead
-
-	if token == nil {
-		errMsg := fmt.Sprintf(errUnexpectedEOF, formatTokenTypes(expectedTypes))
-		err := report.FromLoc(*p.loc, severity.Error, errMsg)
-		p.AddError(err)
-		return nil
-	}
-
-	// Check if current token matches any expected type
-	for _, expectedType := range expectedTypes {
-		if token.Type == expectedType {
-			p.loc = &token.Loc
-			p.lookahead = p.tokenstream.Next()
-			return token
-		}
-	}
-
-	// Token didn't match - report error and try to recover
-	errMsg := fmt.Sprintf(errUnexpectedToken,
-		token.Value,
-		token.Type,
-		formatTokenTypes(expectedTypes),
-	)
-	err := report.FromToken(token, severity.Error, errMsg)
-	p.AddError(err)
-
-	// Create a recovery point based on the expected types
-	recoveryPoint := RecoveryPoint{
-		TokenTypes: expectedTypes,
-		Context:    "expected " + formatTokenTypes(expectedTypes),
-	}
-
-	// Attempt to recover
-	if nextToken, recovered := p.synchronize(recoveryPoint); recovered {
-		p.lookahead = nextToken
-		// Don't recursively call Expect - just return nil to indicate failure
-		// but successful recovery
-		return nil
-	}
-
-	// Recovery failed
-	return nil
 }
 
 // formatTokenTypes formats a slice of TokenType into a readable string.
