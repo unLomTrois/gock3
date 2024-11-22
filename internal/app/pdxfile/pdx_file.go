@@ -2,6 +2,7 @@ package pdxfile
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -61,10 +62,6 @@ func finalize(errs []*report.DiagnosticItem) {
 		}
 		filename, _ := err.Pointer.Loc.Filename()
 		column := err.Pointer.Loc.Column
-
-		fmt.Println(err.Pointer.Loc.Line)
-		fmt.Println(err.Pointer.Loc.Column)
-
 		line := err.Pointer.Loc.Line
 
 		err_line := getErrorLine(file_cache, err, column)
@@ -75,7 +72,7 @@ func finalize(errs []*report.DiagnosticItem) {
 			continue
 		}
 
-		c.Println(fmt.Sprintf("[%s:%d:%d]: %s, got %s", filename, line, column, err.Msg, err_line))
+		c.Println(fmt.Sprintf("[%s:%d:%d]: %s, got %s", filename, line, column, err.Msg, strconv.Quote(err_line)))
 	}
 }
 

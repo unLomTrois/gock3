@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
@@ -71,7 +72,7 @@ func (c *ParseCommand) parse(fullpath string) error {
 		return err
 	}
 
-	fmt.Println(string(ast_string))
+	log.Println(string(ast_string)[0])
 
 	return nil
 }

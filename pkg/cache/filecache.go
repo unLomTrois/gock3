@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"log"
 	"os"
 	"strings"
 
@@ -65,7 +64,7 @@ func (f *FileCache) GetLine(loc *tokens.Loc) string {
 
 	// if nothing found, fill filecahce
 	f.Add(index)
-	log.Println("skip")
+	// log.Println("skip")
 
 	// recursive call
 	return f.GetLine(loc)
