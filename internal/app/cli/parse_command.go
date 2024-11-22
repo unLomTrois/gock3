@@ -72,7 +72,7 @@ func (c *ParseCommand) parse(fullpath string) error {
 		return err
 	}
 
-	log.Println(string(ast_string)[0])
+	log.Println(string(ast_string))
 
 	return nil
 }
