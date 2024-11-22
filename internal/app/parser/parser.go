@@ -2,6 +2,8 @@
 package parser
 
 import (
+	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
@@ -67,6 +69,9 @@ func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 		switch p.lookahead.Type {
 		case tokens.COMMENT:
 			p.Expect(tokens.COMMENT)
+			continue
+		case tokens.NEXTLINE:
+			p.Expect(tokens.NEXTLINE)
 			continue
 		case tokens.WORD, tokens.DATE, tokens.NUMBER:
 			field := p.Field()
@@ -172,6 +177,11 @@ func (p *Parser) Operator() *tokens.Token {
 	}
 }
 
+type Empty struct {
+}
+
+func (e Empty) IsBV() {}
+
 // Value parses the value of a field and returns the corresponding AST node.
 func (p *Parser) Value() ast.BV {
 	if p.lookahead == nil {
@@ -182,12 +192,15 @@ func (p *Parser) Value() ast.BV {
 	}
 
 	switch p.lookahead.Type {
+	case tokens.NEXTLINE:
+		p.Expect(tokens.NEXTLINE)
+		return Empty{}
 	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL:
 		return p.Literal()
 	case tokens.START:
 		return p.Block()
 	default:
-		errMsg := "Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in value"
+		errMsg := fmt.Sprintf("[Value] Unexpected token %s of type \"%s\"", strconv.Quote(p.lookahead.Value), p.lookahead.Type)
 		err := report.FromToken(p.lookahead, severity.Error, errMsg)
 		p.AddError(err)
 		p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
@@ -216,8 +229,13 @@ func (p *Parser) Block() ast.Block {
 	var block ast.Block
 
 	switch p.lookahead.Type {
-	case tokens.COMMENT:
-		p.Expect(tokens.COMMENT)
+	case tokens.COMMENT, tokens.NEXTLINE:
+		for p.lookahead.Type == tokens.COMMENT {
+			p.Expect(tokens.COMMENT)
+		}
+		for p.lookahead.Type == tokens.NEXTLINE {
+			p.Expect(tokens.NEXTLINE)
+		}
 		fallthrough
 	case tokens.WORD, tokens.DATE:
 		peek := p.tokenstream.Peek()
@@ -227,7 +245,6 @@ func (p *Parser) Block() ast.Block {
 		}
 
 		block = p.FieldBlock(loc)
-		// case tokens.QUOTED_STRING:
 	case tokens.NUMBER, tokens.QUOTED_STRING:
 		if p.tokenstream.Peek().Type == tokens.EQUALS {
 			block = p.FieldBlock(loc)
@@ -236,8 +253,10 @@ func (p *Parser) Block() ast.Block {
 
 		block = p.TokenBlock()
 	default:
-		errMsg := "[Block] Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in block"
-		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		errorMsg := fmt.Sprintf("[Block] Unexpected token %s of type \"%s\" in block", strconv.Quote(p.lookahead.Value), p.lookahead.Type)
+
+		log.Println(errorMsg)
+		err := report.FromToken(p.lookahead, severity.Error, errorMsg)
 		p.AddError(err)
 		p.synchronize(tokens.END, tokens.WORD, tokens.DATE)
 		return nil
@@ -272,6 +291,9 @@ func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 		}
 
 		switch p.lookahead.Type {
+		case tokens.NEXTLINE:
+			p.Expect(tokens.NEXTLINE)
+			continue
 		case tokens.NUMBER, tokens.QUOTED_STRING, tokens.WORD:
 			token := p.Literal()
 			if token != nil {
@@ -279,7 +301,9 @@ func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 			}
 		default:
 			// Handle unexpected token
-			errMsg := "[TokenList] Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in token list"
+			// errMsg := "[TokenList] Unexpected token '" + p.lookahead.Value + "' of type '" + string(p.lookahead.Type) + "' in token list"
+
+			errMsg := fmt.Sprintf("[TokenList] Unexpected token %s of type \"%s\" in token list", strconv.Quote(p.lookahead.Value), p.lookahead.Type)
 			err := report.FromToken(p.lookahead, severity.Error, errMsg)
 			p.AddError(err)
 			p.synchronize(tokens.END, tokens.WORD, tokens.DATE)

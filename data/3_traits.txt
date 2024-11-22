@@ -11,12 +11,50 @@ education_intrigue_1 = {
 	color = { 255 100 0 }
 	based = { "Cringe" }
 
+	key = # something
+
+	nothing = #parser doesn't crash!
+
+	opposites = {
+		chaste
+	}
+
 	track = {
 		50 = {
 			something = 1
 		}
 		100 = {
 			# empty
+		}
+	}
+
+		# Loc
+	name = {
+		first_valid = {
+			#Legendary Reveler
+			triggered_desc = {
+				trigger = {
+					exists = this
+					has_trait_xp = {
+						trait = lifestyle_reveler
+						value >= 100
+					}
+				}
+				desc = trait_reveler_3
+			}
+			#Famous Reveler
+			triggered_desc = {
+				trigger = { 
+					exists = this
+					has_trait_xp = {
+						trait = lifestyle_reveler
+						value >= 50
+					}
+				}
+				desc = trait_reveler_2
+			}
+			#Eager Reveler
+			desc = trait_reveler_1
 		}
 	}
 

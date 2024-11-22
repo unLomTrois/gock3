@@ -12,7 +12,7 @@ import (
 )
 
 type Lexer struct {
-	entry          *files.FileEntry
+	fileEntry      *files.FileEntry
 	text           []byte
 	cursor         int
 	line           int
@@ -24,7 +24,7 @@ type Lexer struct {
 // NewLexer creates a new Lexer instance
 func NewLexer(entry *files.FileEntry, text []byte) *Lexer {
 	return &Lexer{
-		entry:          entry,
+		fileEntry:      entry,
 		text:           NormalizeText(text),
 		cursor:         0,
 		line:           1,
@@ -41,6 +41,7 @@ func NormalizeText(text []byte) []byte {
 	return text
 }
 
+// hasMoreTokens checks if there are more tokens to process by comparing the current cursor position with the text length
 func (lex *Lexer) hasMoreTokens() bool {
 	return lex.cursor < len(lex.text)
 }
@@ -62,10 +63,16 @@ func Scan(entry *files.FileEntry, text []byte) (*tokens.TokenStream, []*report.D
 	return tokenStream, lex.Errors()
 }
 
+// remainder returns the remaining unprocessed text from the current cursor position
 func (lex *Lexer) remainder() []byte {
 	return lex.text[lex.cursor:]
 }
 
+// getNextToken processes and returns the next token from the input text.
+// It matches the remaining text against token patterns in a specific order,
+// handles special tokens like whitespace and newlines by updating line/column numbers,
+// and returns nil for ignored tokens. If no valid token is found, it reports an error
+// and advances the cursor to prevent infinite loops.
 func (lex *Lexer) getNextToken() *tokens.Token {
 	if !lex.hasMoreTokens() {
 		return nil
@@ -105,7 +112,11 @@ func (lex *Lexer) getNextToken() *tokens.Token {
 		case tokens.NEXTLINE:
 			lex.line++
 			lex.column = 1
-			return nil
+
+			loc := tokens.LocFromFileEntry(lex.fileEntry)
+			loc.Line = uint32(lex.line)
+			loc.Column = uint16(lex.column)
+			return tokens.New(tokenValue, matchedTokenType, *loc)
 		case tokens.WHITESPACE:
 			// Ignore whitespace
 			lex.column++
@@ -115,7 +126,7 @@ func (lex *Lexer) getNextToken() *tokens.Token {
 			return nil
 		default:
 			lex.column += len(matchedToken)
-			loc := tokens.LocFromFileEntry(lex.entry)
+			loc := tokens.LocFromFileEntry(lex.fileEntry)
 			loc.Line = uint32(startLine)
 			loc.Column = uint16(startColumn)
 			return tokens.New(tokenValue, matchedTokenType, *loc)
@@ -123,7 +134,7 @@ func (lex *Lexer) getNextToken() *tokens.Token {
 	}
 
 	unexpectedChar := remainder[0]
-	loc := tokens.LocFromFileEntry(lex.entry)
+	loc := tokens.LocFromFileEntry(lex.fileEntry)
 	loc.Line = uint32(lex.line)
 	loc.Column = uint16(lex.column)
 	err := report.FromLoc(*loc, severity.Critical, fmt.Sprintf("unexpected token '%c'", unexpectedChar))
