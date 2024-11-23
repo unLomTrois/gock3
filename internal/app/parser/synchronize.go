@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
@@ -16,27 +15,27 @@ const (
 	maxTokensToSkip     = 50
 )
 
-// RecoveryPoint represents a stable point in the grammar where parsing can resume
+// RecoveryPoint represents a stable point in the grammar where parsing can resume.
 type RecoveryPoint struct {
 	TokenTypes []tokens.TokenType
 	Context    string
 }
 
-// Common recovery points in the grammar - exported so they can be used in parser.go
+// Common recovery points in the grammar.
 var (
-	// For field-level recovery - look for start of new field
+	// For field-level recovery - look for start of new field.
 	FieldRecovery = RecoveryPoint{
 		TokenTypes: []tokens.TokenType{tokens.WORD, tokens.DATE, tokens.NUMBER, tokens.END},
 		Context:    "field",
 	}
 
-	// For block-level recovery - look for block end or new statement
+	// For block-level recovery - look for block end or new statement.
 	BlockRecovery = RecoveryPoint{
 		TokenTypes: []tokens.TokenType{tokens.END, tokens.WORD, tokens.DATE},
 		Context:    "block",
 	}
 
-	// For expression recovery - look for operators or statement end
+	// For expression recovery - look for operators or statement end.
 	ExpressionRecovery = RecoveryPoint{
 		TokenTypes: []tokens.TokenType{tokens.EQUALS, tokens.COMPARISON, tokens.END},
 		Context:    "expression",
@@ -47,7 +46,6 @@ var (
 		Context:    "key",
 	}
 
-	//
 	ValueRecovery = RecoveryPoint{
 		TokenTypes: []tokens.TokenType{tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL, tokens.START},
 		Context:    "value",
@@ -56,9 +54,6 @@ var (
 	FieldListRecovery = RecoveryPoint{
 		TokenTypes: []tokens.TokenType{
 			tokens.END, tokens.WORD, tokens.DATE,
-			// tokens.WORD, tokens.DATE, tokens.NUMBER, // Valid field starters
-			// tokens.NEXTLINE, tokens.COMMENT, // Skippable tokens
-			// tokens.END, // Block end
 		},
 		Context: "field list",
 	}
@@ -69,51 +64,48 @@ var (
 			tokens.NUMBER,
 			tokens.BOOL,
 			tokens.QUOTED_STRING,
-			tokens.NEXTLINE, // Allow recovery at line boundaries
-			tokens.END,      // Allow recovery at block ends
+			tokens.NEXTLINE, // Allow recovery at line boundaries.
+			tokens.END,      // Allow recovery at block ends.
 		},
 		Context: "literal value",
 	}
 )
 
-// synchronize attempts to recover from parsing errors by finding a stable point
+// synchronize attempts to recover from parsing errors by finding a stable point.
 func (p *Parser) synchronize(point RecoveryPoint) (*tokens.Token, bool) {
 	attempts := 0
 	skippedTokens := 0
 	startLoc := *p.loc
 
-	// Keep track of skipped tokens for error reporting
+	// Keep track of skipped tokens for error reporting.
 	var skipped []*tokens.Token
 
-	for p.lookahead != nil && attempts < maxRecoveryAttempts && skippedTokens < maxTokensToSkip {
+	for p.currentToken != nil && attempts < maxRecoveryAttempts && skippedTokens < maxTokensToSkip {
 		attempts++
 
-		log.Println(attempts)
-
-		// Check if current token is a recovery point
+		// Check if current token is a recovery point.
 		for _, expectedType := range point.TokenTypes {
-			if p.lookahead.Type == expectedType {
-				// Found recovery point - report skipped section
+			if p.currentToken.Type == expectedType {
+				// Found recovery point - report skipped section.
 				if len(skipped) > 0 {
 					p.reportSkippedSection(startLoc, skipped, point.Context)
 				}
-				return p.lookahead, true
+				return p.currentToken, true
 			}
 		}
 
-		// Skip current token
-		skipped = append(skipped, p.lookahead)
-		p.lookahead = p.tokenstream.Next()
+		// Skip current token.
+		skipped = append(skipped, p.currentToken)
+		p.nextToken()
 		skippedTokens++
 	}
 
-	// Failed to recover
+	// Failed to recover.
 	p.reportRecoveryFailure(startLoc, point.Context)
 	return nil, false
 }
 
-// ? is it even needed?
-// reportSkippedSection reports the tokens that were skipped during recovery
+// reportSkippedSection reports the tokens that were skipped during recovery.
 func (p *Parser) reportSkippedSection(startLoc tokens.Loc, skipped []*tokens.Token, context string) {
 	var skippedValues []string
 	for _, t := range skipped {
@@ -130,7 +122,7 @@ func (p *Parser) reportSkippedSection(startLoc tokens.Loc, skipped []*tokens.Tok
 	p.AddError(err)
 }
 
-// reportRecoveryFailure reports when the parser couldn't recover
+// reportRecoveryFailure reports when the parser couldn't recover.
 func (p *Parser) reportRecoveryFailure(startLoc tokens.Loc, context string) {
 	errMsg := fmt.Sprintf(
 		"Failed to recover while parsing %s - too many invalid tokens",
@@ -138,13 +130,4 @@ func (p *Parser) reportRecoveryFailure(startLoc tokens.Loc, context string) {
 	)
 	err := report.FromLoc(startLoc, severity.Error, errMsg)
 	p.AddError(err)
-}
-
-// Optional: Helper functions specific to error recovery
-func formatSkippedTokens(tokens []*tokens.Token) string {
-	var parts []string
-	for _, t := range tokens {
-		parts = append(parts, fmt.Sprintf("%q(%s)", t.Value, t.Type))
-	}
-	return strings.Join(parts, ", ")
 }

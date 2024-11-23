@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -16,34 +15,41 @@ import (
 
 // Parser represents the parser with its current state and error manager.
 type Parser struct {
-	tokenstream *tokens.TokenStream
-	lookahead   *tokens.Token
-	loc         *tokens.Loc
+	tokenstream  *tokens.TokenStream
+	currentToken *tokens.Token
+	lookahead    *tokens.Token
+	loc          *tokens.Loc
 	*report.ErrorManager
 }
 
 // New creates a new Parser instance.
 func New(tokenstream *tokens.TokenStream) *Parser {
-	return &Parser{
+	p := &Parser{
 		tokenstream:  tokenstream,
-		lookahead:    nil,
-		loc:          nil,
 		ErrorManager: report.NewErrorManager(),
 	}
+	p.currentToken = p.tokenstream.Next()
+	p.lookahead = p.tokenstream.Next()
+	if p.currentToken != nil {
+		p.loc = &p.currentToken.Loc
+	}
+	return p
 }
 
 // Parse processes the token stream and returns the AST along with any diagnostic errors.
 func Parse(token_stream *tokens.TokenStream) (*ast.FileBlock, []*report.DiagnosticItem) {
 	p := New(token_stream)
-
-	p.lookahead = p.tokenstream.Next()
-	if p.lookahead != nil {
-		p.loc = &p.lookahead.Loc
-	}
-
 	fileBlock := p.fileBlock()
-
 	return fileBlock, p.Errors()
+}
+
+// nextToken advances the currentToken and lookahead tokens.
+func (p *Parser) nextToken() {
+	p.currentToken = p.lookahead
+	p.lookahead = p.tokenstream.Next()
+	if p.currentToken != nil {
+		p.loc = &p.currentToken.Loc
+	}
 }
 
 // 2. Core parser methods
@@ -52,7 +58,7 @@ func Parse(token_stream *tokens.TokenStream) (*ast.FileBlock, []*report.Diagnost
 // If it does, it consumes the token and returns it.
 // If not, it reports an error, attempts to recover, and returns nil.
 func (p *Parser) Expect(expectedTypes ...tokens.TokenType) *tokens.Token {
-	token := p.lookahead
+	token := p.currentToken
 
 	if token == nil {
 		errMsg := fmt.Sprintf(errUnexpectedEOF, formatTokenTypes(expectedTypes))
@@ -64,8 +70,7 @@ func (p *Parser) Expect(expectedTypes ...tokens.TokenType) *tokens.Token {
 	// Check if current token matches any expected type
 	for _, expectedType := range expectedTypes {
 		if token.Type == expectedType {
-			p.loc = &token.Loc
-			p.lookahead = p.tokenstream.Next()
+			p.nextToken()
 			return token
 		}
 	}
@@ -86,10 +91,9 @@ func (p *Parser) Expect(expectedTypes ...tokens.TokenType) *tokens.Token {
 	}
 
 	// Attempt to recover
-	if nextToken, recovered := p.synchronize(recoveryPoint); recovered {
-		p.lookahead = nextToken
-		// Don't recursively call Expect - just return nil to indicate failure
-		// but successful recovery
+	if _, recovered := p.synchronize(recoveryPoint); recovered {
+		// p.currentToken = nextToken
+		// p.lookahead = p.tokenstream.Peek()
 		return nil
 	}
 
@@ -121,7 +125,7 @@ func (p *Parser) unquoteExpect(expectedType tokens.TokenType) *tokens.Token {
 
 // fileBlock parses the entire file and constructs the AST's FileBlock.
 func (p *Parser) fileBlock() *ast.FileBlock {
-	if p.lookahead == nil {
+	if p.currentToken == nil {
 		// Empty file
 		return &ast.FileBlock{Values: []*ast.Field{}, Loc: tokens.Loc{}}
 	}
@@ -135,15 +139,15 @@ func (p *Parser) fileBlock() *ast.FileBlock {
 func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 	fields := make([]*ast.Field, 0)
 
-	for p.lookahead != nil {
+	for p.currentToken != nil {
 		// Check for stop tokens to end the field list
-		if len(stopLookahead) > 0 && p.lookahead.Type == stopLookahead[0] {
+		if len(stopLookahead) > 0 && p.currentToken.Type == stopLookahead[0] {
 			break
 		}
 
-		switch p.lookahead.Type {
+		switch p.currentToken.Type {
 		case tokens.COMMENT, tokens.NEXTLINE:
-			p.Expect(tokens.COMMENT, tokens.NEXTLINE)
+			p.skipTokens(tokens.COMMENT, tokens.NEXTLINE)
 			continue
 		case tokens.WORD, tokens.DATE, tokens.NUMBER:
 			field := p.Field()
@@ -152,14 +156,11 @@ func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 			}
 		default:
 			// Handle unexpected token
-			errMsg := fmt.Sprintf(errFieldListUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
-			err := report.FromToken(p.lookahead, severity.Error, errMsg)
+			errMsg := fmt.Sprintf(errFieldListUnexpectedToken, p.currentToken.Value, p.currentToken.Type)
+			err := report.FromToken(p.currentToken, severity.Error, errMsg)
 			p.AddError(err)
-
-			if rec, recovered := p.synchronize(FieldListRecovery); !recovered {
+			if _, recovered := p.synchronize(FieldListRecovery); !recovered {
 				return fields // Stop parsing if recovery fails
-			} else {
-				log.Println(recovered, rec.Type, rec.Value)
 			}
 		}
 	}
@@ -169,12 +170,12 @@ func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 
 // Field parses a single field and returns the corresponding AST node.
 func (p *Parser) Field() *ast.Field {
-	switch p.lookahead.Type {
+	switch p.currentToken.Type {
 	case tokens.WORD, tokens.DATE, tokens.NUMBER:
 		return p.ExpressionNode()
 	default:
-		errMsg := fmt.Sprintf(errUnexpectedFieldToken, p.lookahead.Value, p.lookahead.Type)
-		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		errMsg := fmt.Sprintf(errUnexpectedFieldToken, p.currentToken.Value, p.currentToken.Type)
+		err := report.FromToken(p.currentToken, severity.Error, errMsg)
 		p.AddError(err)
 
 		if _, recovered := p.synchronize(FieldRecovery); !recovered {
@@ -212,19 +213,19 @@ func (p *Parser) ExpressionNode() *ast.Field {
 
 // Key parses the key of a field and returns the corresponding token.
 func (p *Parser) Key() *tokens.Token {
-	if p.lookahead == nil {
+	if p.currentToken == nil {
 		errMsg := "Expected a key, but reached end of input"
 		err := report.FromLoc(*p.loc, severity.Error, errMsg)
 		p.AddError(err)
 		return nil
 	}
 
-	switch p.lookahead.Type {
+	switch p.currentToken.Type {
 	case tokens.WORD, tokens.DATE, tokens.NUMBER:
 		return p.Expect(tokens.WORD, tokens.DATE, tokens.NUMBER)
 	default:
-		errMsg := fmt.Sprintf("Expected a key (WORD, DATE, or NUMBER), but found %q of type %q", p.lookahead.Value, p.lookahead.Type)
-		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		errMsg := fmt.Sprintf("Expected a key (WORD, DATE, or NUMBER), but found %q of type %q", p.currentToken.Value, p.currentToken.Type)
+		err := report.FromToken(p.currentToken, severity.Error, errMsg)
 		p.AddError(err)
 
 		if _, recovered := p.synchronize(KeyRecovery); !recovered {
@@ -236,44 +237,43 @@ func (p *Parser) Key() *tokens.Token {
 
 // Operator parses the operator of a field and returns the corresponding token.
 func (p *Parser) Operator() *tokens.Token {
-	if p.lookahead == nil {
+	if p.currentToken == nil {
 		errMsg := errOperatorExpectedEOF
 		err := report.FromLoc(*p.loc, severity.Error, errMsg)
 		p.AddError(err)
 		return nil
 	}
 
-	switch p.lookahead.Type {
+	switch p.currentToken.Type {
 	case tokens.QUESTION_EQUALS:
 		return p.Expect(tokens.QUESTION_EQUALS)
 	case tokens.EQUALS:
 		return p.Expect(tokens.EQUALS)
 	case tokens.COMPARISON:
 		return p.Expect(tokens.COMPARISON)
-
 	default:
-		errMsg := fmt.Sprintf(errOperatorUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
-		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		errMsg := fmt.Sprintf(errOperatorUnexpectedToken, p.currentToken.Value, p.currentToken.Type)
+		err := report.FromToken(p.currentToken, severity.Error, errMsg)
 		p.AddError(err)
 
 		if _, recovered := p.synchronize(ValueRecovery); !recovered {
 			return nil // Stop parsing if recovery fails
 		}
 
-		return nil // Return nil after synchronization, even if successful
+		return nil // Return nil after synchronization
 	}
 }
 
 // Value parses the value of a field and returns the corresponding AST node.
 func (p *Parser) Value() ast.BV {
-	if p.lookahead == nil {
+	if p.currentToken == nil {
 		errMsg := errValueExpectedEOF
 		err := report.FromLoc(*p.loc, severity.Error, errMsg)
 		p.AddError(err)
 		return nil
 	}
 
-	switch p.lookahead.Type {
+	switch p.currentToken.Type {
 	case tokens.NEXTLINE:
 		p.Expect(tokens.NEXTLINE)
 		return p.EmptyValue()
@@ -282,8 +282,8 @@ func (p *Parser) Value() ast.BV {
 	case tokens.START:
 		return p.Block()
 	default:
-		errMsg := fmt.Sprintf(errValueUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
-		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		errMsg := fmt.Sprintf(errValueUnexpectedToken, p.currentToken.Value, p.currentToken.Type)
+		err := report.FromToken(p.currentToken, severity.Error, errMsg)
 		p.AddError(err)
 		p.synchronize(ValueRecovery)
 		return nil
@@ -299,15 +299,15 @@ func (p *Parser) EmptyValue() ast.BV {
 
 // Literal parses a literal token and returns the corresponding token.
 func (p *Parser) Literal() *tokens.Token {
-	if p.lookahead == nil {
+	if p.currentToken == nil {
 		err := report.FromLoc(*p.loc, severity.Error, errLiteralExpectedEOF)
 		p.AddError(err)
 		return nil
 	}
 
-	switch p.lookahead.Type {
+	switch p.currentToken.Type {
 	case tokens.WORD, tokens.NUMBER, tokens.BOOL:
-		if token := p.Expect(p.lookahead.Type); token != nil {
+		if token := p.Expect(p.currentToken.Type); token != nil {
 			return token
 		}
 		// If Expect failed (shouldn't normally happen), try recovery
@@ -319,14 +319,15 @@ func (p *Parser) Literal() *tokens.Token {
 		// If unquoteExpect failed, try recovery
 
 	default:
-		errMsg := fmt.Sprintf(errLiteralUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
-		err := report.FromToken(p.lookahead, severity.Error, errMsg)
+		errMsg := fmt.Sprintf(errLiteralUnexpectedToken, p.currentToken.Value, p.currentToken.Type)
+		err := report.FromToken(p.currentToken, severity.Error, errMsg)
 		p.AddError(err)
 	}
 
 	// Attempt recovery for any failure case
 	if token, recovered := p.synchronize(LiteralRecovery); recovered {
-		p.lookahead = token
+		// p.currentToken = token
+		// p.lookahead = p.tokenstream.Peek()
 		// Try parsing literal again from recovery point
 		// But only try once to avoid potential infinite recursion
 		if isLiteralType(token.Type) {
@@ -348,51 +349,74 @@ func (p *Parser) Block() ast.Block {
 	p.Expect(tokens.START)
 	loc := *p.loc
 
-	if p.lookahead.Type == tokens.END {
+	if p.currentToken.Type == tokens.END {
 		p.Expect(tokens.END)
 		return &ast.FieldBlock{Values: []*ast.Field{}, Loc: loc}
 	}
 
 	var block ast.Block
 
-	for p.lookahead.Type != tokens.END {
-		switch p.lookahead.Type {
+	for p.currentToken != nil && p.currentToken.Type != tokens.END {
+		switch p.currentToken.Type {
 		case tokens.COMMENT, tokens.NEXTLINE:
-			for p.lookahead.Type == tokens.COMMENT {
-				p.Expect(tokens.COMMENT)
-			}
-			for p.lookahead.Type == tokens.NEXTLINE {
-				p.Expect(tokens.NEXTLINE)
-			}
-			fallthrough
-		case tokens.WORD, tokens.DATE:
-			peek := p.tokenstream.Peek()
-			if peek.Type != tokens.EQUALS && peek.Type != tokens.QUESTION_EQUALS {
-				block = p.TokenBlock()
-				break
-			}
-
-			block = p.FieldBlock(loc)
-		case tokens.NUMBER, tokens.QUOTED_STRING:
-			if p.tokenstream.Peek().Type == tokens.EQUALS {
+			p.skipTokens(tokens.COMMENT, tokens.NEXTLINE)
+			continue
+		case tokens.WORD, tokens.DATE, tokens.QUOTED_STRING, tokens.NUMBER:
+			if p.isNextField() {
 				block = p.FieldBlock(loc)
-				break
+			} else {
+				block = p.TokenBlock()
 			}
-
-			block = p.TokenBlock()
 		default:
-			errorMsg := fmt.Sprintf(errBlockUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
-			err := report.FromToken(p.lookahead, severity.Error, errorMsg)
+			errorMsg := fmt.Sprintf(errBlockUnexpectedToken, p.currentToken.Value, p.currentToken.Type)
+			err := report.FromToken(p.currentToken, severity.Error, errorMsg)
 			p.AddError(err)
 			p.synchronize(BlockRecovery)
 			continue
 		}
+		break // Exit the loop after processing the block
 	}
 
 	// Expect closing brace '}'
 	p.Expect(tokens.END)
 
 	return block
+}
+
+func (p *Parser) skipTokens(types ...tokens.TokenType) {
+	for p.currentToken != nil {
+		match := false
+		for _, t := range types {
+			match = p.currentToken.Type == t
+			if match {
+				p.Expect(t) // Consume the token
+				break
+			}
+		}
+		if !match {
+			break // Exit if currentToken doesn't match any type
+		}
+	}
+}
+
+// isNextField determines if the next construct is liekely a field.
+func (p *Parser) isNextField() bool {
+	return isKeyToken(p.currentToken.Type) && isOperatorToken(p.lookahead.Type)
+}
+
+// 6. Helper functions
+
+// Helper functions for token type checks.
+func isKeyToken(tokenType tokens.TokenType) bool {
+	return tokenType == tokens.WORD || tokenType == tokens.DATE || tokenType == tokens.NUMBER
+}
+
+func isOperatorToken(tokenType tokens.TokenType) bool {
+	return isEqualOperatorToken(tokenType) || tokenType == tokens.COMPARISON
+}
+
+func isEqualOperatorToken(tokenType tokens.TokenType) bool {
+	return tokenType == tokens.EQUALS || tokenType == tokens.QUESTION_EQUALS
 }
 
 // FieldBlock parses a block of fields and returns the corresponding AST node.
@@ -411,13 +435,13 @@ func (p *Parser) TokenBlock() *ast.TokenBlock {
 func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 	tokensList := make([]*tokens.Token, 0)
 
-	for p.lookahead != nil {
+	for p.currentToken != nil {
 		// Check for stop tokens to end the token list
-		if len(stopLookahead) > 0 && p.lookahead.Type == stopLookahead[0] {
+		if len(stopLookahead) > 0 && p.currentToken.Type == stopLookahead[0] {
 			break
 		}
 
-		switch p.lookahead.Type {
+		switch p.currentToken.Type {
 		case tokens.NEXTLINE:
 			p.Expect(tokens.NEXTLINE)
 			continue
@@ -427,8 +451,8 @@ func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 				tokensList = append(tokensList, token)
 			}
 		default:
-			errMsg := fmt.Sprintf(errTokenListUnexpectedToken, p.lookahead.Value, p.lookahead.Type)
-			err := report.FromToken(p.lookahead, severity.Error, errMsg)
+			errMsg := fmt.Sprintf(errTokenListUnexpectedToken, p.currentToken.Value, p.currentToken.Type)
+			err := report.FromToken(p.currentToken, severity.Error, errMsg)
 			p.AddError(err)
 
 			recoveryPoint := RecoveryPoint{
@@ -444,8 +468,6 @@ func (p *Parser) TokenList(stopLookahead ...tokens.TokenType) []*tokens.Token {
 
 	return tokensList
 }
-
-// 6. Helper functions
 
 // isLiteralType checks if a token type represents a literal value.
 func isLiteralType(tokenType tokens.TokenType) bool {

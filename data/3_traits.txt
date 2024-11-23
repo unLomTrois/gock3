@@ -17,6 +17,11 @@ education_intrigue_1 = {
 
 	opposites = {
 		chaste
+		craven
+		# something
+		maken
+		1
+		"whatfhe"
 	}
 
 	track = {
