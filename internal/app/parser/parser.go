@@ -146,8 +146,8 @@ func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 		}
 
 		switch p.currentToken.Type {
-		case tokens.COMMENT, tokens.NEXTLINE:
-			p.skipTokens(tokens.COMMENT, tokens.NEXTLINE)
+		case tokens.NEXTLINE:
+			p.skipTokens(tokens.NEXTLINE)
 			continue
 		case tokens.WORD, tokens.DATE, tokens.NUMBER:
 			field := p.Field()
@@ -358,8 +358,8 @@ func (p *Parser) Block() ast.Block {
 
 	for p.currentToken != nil && p.currentToken.Type != tokens.END {
 		switch p.currentToken.Type {
-		case tokens.COMMENT, tokens.NEXTLINE:
-			p.skipTokens(tokens.COMMENT, tokens.NEXTLINE)
+		case tokens.NEXTLINE:
+			p.skipTokens(tokens.NEXTLINE)
 			continue
 		case tokens.WORD, tokens.DATE, tokens.QUOTED_STRING, tokens.NUMBER:
 			if p.isNextField() {
