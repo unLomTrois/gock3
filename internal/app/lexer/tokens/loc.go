@@ -1,6 +1,7 @@
 package tokens
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
@@ -52,7 +53,12 @@ func (loc *Loc) Fullpath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fullpath, nil
+
+	// fullpathWithLoc := fullpath + ":" + loc.Line + ":" + loc.Column
+
+	fullpathWithLoc := fmt.Sprintf("%s:%d:%d", fullpath, loc.Line, loc.Column)
+
+	return fullpathWithLoc, nil
 }
 
 // SameFile проверяет, ссылается ли Loc на тот же файл, что и другой Loc

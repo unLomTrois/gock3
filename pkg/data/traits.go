@@ -94,5 +94,14 @@ func (traits *Traits) parseTraits(block *ast.FieldBlock) ([]*Trait, []*report.Di
 		traitEntries = append(traitEntries, trait)
 	}
 
+	for _, trait := range traitEntries {
+		fp, err := trait.key.Loc.Fullpath()
+		if err != nil {
+			panic(err)
+		}
+
+		log.Println(trait.name, fp)
+	}
+
 	return traitEntries, problems
 }

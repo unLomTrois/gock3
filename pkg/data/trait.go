@@ -9,12 +9,14 @@ import (
 )
 
 type Trait struct {
+	name  string
 	key   *tokens.Token
 	block *ast.FieldBlock
 }
 
 func NewTraitFromAST(key *tokens.Token, block *ast.FieldBlock) *Trait {
 	return &Trait{
+		name:  key.Value,
 		key:   key,
 		block: block,
 	}
