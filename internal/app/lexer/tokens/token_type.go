@@ -23,7 +23,7 @@ var TokenTypeRegexMap = map[TokenType]string{
 	COMMENT:         `^#(.+)?`,
 	WORD:            `^@?(?:[\w-]+:)?[\w.-]+`,
 	QUOTED_STRING:   `^"(.*?)"`,
-	NUMBER:          `^-?\d+([.,]\d+)?`,
+	NUMBER:          `^-?\d+([.,]\d+)?\b`,
 	BOOL:            `^(yes|no)\b`,
 	NEXTLINE:        `^\n`,
 	EQUALS:          `^==?`,
