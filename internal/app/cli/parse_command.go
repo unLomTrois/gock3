@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
@@ -67,12 +66,12 @@ func (c *ParseCommand) parse(fullpath string) error {
 		return err
 	}
 
-	ast_string, err := json.MarshalIndent(ast, "", "  ")
+	_, err = json.MarshalIndent(ast, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	log.Println(string(ast_string))
+	// log.Println(string(ast_string))
 
 	return nil
 }
