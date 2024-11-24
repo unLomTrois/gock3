@@ -72,3 +72,5 @@ func (fset *FileSet) Scan(path string) error {
 
 	return err
 }
+
+// TODO: add paths from mod
