@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 )
 
@@ -20,6 +19,6 @@ func SaveJSON(data interface{}, fullpath string) error {
 		return err
 	}
 
-	log.Printf("Saved JSON to %s", fullpath)
+	// log.Printf("Saved JSON to %s", fullpath)
 	return nil
 }

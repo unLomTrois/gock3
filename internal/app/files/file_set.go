@@ -61,6 +61,36 @@ func (fset *FileSet) Scan(path string) error {
 			return nil
 		}
 
+		fileEntry := NewFileEntry(subpath, Vanilla)
+
+		fset.Files = append(fset.Files, fileEntry)
+
+		return nil
+	})
+
+	log.Println("Found", len(fset.Files), "files")
+
+	log.Println(fset.ModLoader.Root)
+
+	filepath.WalkDir(fset.ModLoader.Root, func(subpath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// if d.IsDir() {
+		// 	for _, replacePath := range cleanReplacePaths {
+		// 		if strings.Contains(subpath, replacePath) {
+		// 			return filepath.SkipDir
+		// 		}
+		// 	}
+
+		// 	return nil
+		// }
+
+		if !(strings.HasSuffix(subpath, ".txt")) {
+			return nil
+		}
+
 		fileEntry := NewFileEntry(subpath, Mod)
 
 		fset.Files = append(fset.Files, fileEntry)

@@ -33,7 +33,7 @@ var TokenTypeRegexMap = map[TokenType]string{
 	WHITESPACE:      `^\s`,
 	TAB:             `^\t`,
 	COMPARISON:      `^[\<\>]=?`,
-	DATE:            `^\d+\.\d{1,2}\.\d{1,2}`,
+	DATE:            `^-?\d+\.\d{1,2}\.(\d{1,2})?`,
 }
 
 // TokenCheckOrder defines the order in which tokens should be checked

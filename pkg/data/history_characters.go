@@ -11,57 +11,57 @@ import (
 	"github.com/unLomTrois/gock3/pkg/report"
 )
 
-type Traits struct {
-	Traits []*Trait
-	ast    *ast.AST
+type HistoryCharacters struct {
+	Characters []*HistoryCharacter
+	ast        *ast.AST
 }
 
-func NewTraits() *Traits {
-	return &Traits{
-		Traits: []*Trait{},
-		ast:    &ast.AST{},
+func NewHistoryCharacters() *HistoryCharacters {
+	return &HistoryCharacters{
+		Characters: make([]*HistoryCharacter, 0),
+		ast:        nil,
 	}
 }
 
 // Folder returns the folder path for traits, using the correct
 // path separator for the operating system.
-func (t *Traits) Folder() string {
-	return filepath.Join("common", "traits")
+func (t *HistoryCharacters) Folder() string {
+	return filepath.Join("history", "characters")
 }
 
-func (traits *Traits) Load(fileEntries []*files.FileEntry) {
-	traitFiles := traits.filterTraitFiles(fileEntries)
+func (hc *HistoryCharacters) Load(fileEntries []*files.FileEntry) {
+	files := hc.filterFiles(fileEntries)
 
-	log.Printf("Found %d trait files", len(traitFiles))
+	log.Printf("Found %d character files", len(files))
 
 	var problems []*report.DiagnosticItem
 
-	for _, file := range traitFiles {
-		ast := traits.loadFile(file)
+	for _, file := range files {
+		ast := hc.loadFile(file)
 		if ast == nil {
 			continue
 		}
 
-		traitEntries, diagnostics := traits.parseTraits(ast.Block)
-		traits.Traits = append(traits.Traits, traitEntries...)
+		entries, diagnostics := hc.parse(ast.Block)
+		hc.Characters = append(hc.Characters, entries...)
 		problems = append(problems, diagnostics...)
 	}
 
-	log.Printf("Found %d traits", len(traits.Traits))
+	log.Printf("Found %d characters", len(hc.Characters))
 	log.Printf("%d problems", len(problems))
 }
 
-func (traits *Traits) filterTraitFiles(fileEntries []*files.FileEntry) []*files.FileEntry {
+func (hc *HistoryCharacters) filterFiles(fileEntries []*files.FileEntry) []*files.FileEntry {
 	traitFiles := make([]*files.FileEntry, 0, len(fileEntries))
 	for _, fileEntry := range fileEntries {
-		if strings.Contains(fileEntry.FullPath(), traits.Folder()) {
+		if strings.Contains(fileEntry.FullPath(), hc.Folder()) {
 			traitFiles = append(traitFiles, fileEntry)
 		}
 	}
 	return traitFiles
 }
 
-func (traits *Traits) loadFile(fileEntry *files.FileEntry) *ast.AST {
+func (hc *HistoryCharacters) loadFile(fileEntry *files.FileEntry) *ast.AST {
 	ast, err := pdxfile.ParseFile(fileEntry)
 	if err != nil {
 		log.Printf("Failed to parse file %s: %v", fileEntry.FullPath(), err)
@@ -70,8 +70,8 @@ func (traits *Traits) loadFile(fileEntry *files.FileEntry) *ast.AST {
 	return ast
 }
 
-func (traits *Traits) parseTraits(block *ast.FieldBlock) ([]*Trait, []*report.DiagnosticItem) {
-	var traitEntries []*Trait
+func (traits *HistoryCharacters) parse(block *ast.FieldBlock) ([]*HistoryCharacter, []*report.DiagnosticItem) {
+	var entities []*HistoryCharacter
 	var problems []*report.DiagnosticItem
 
 	for _, field := range block.Values {
@@ -86,9 +86,9 @@ func (traits *Traits) parseTraits(block *ast.FieldBlock) ([]*Trait, []*report.Di
 			continue
 		}
 
-		trait := NewTraitFromAST(key, block)
-		problems = append(problems, trait.Validate()...)
-		traitEntries = append(traitEntries, trait)
+		character := NewHistoryCharacter(key, block)
+		problems = append(problems, character.Validate()...)
+		entities = append(entities, character)
 	}
 
 	// for _, trait := range traitEntries {
@@ -100,5 +100,5 @@ func (traits *Traits) parseTraits(block *ast.FieldBlock) ([]*Trait, []*report.Di
 	// 	log.Println(trait.name, fp)
 	// }
 
-	return traitEntries, problems
+	return entities, problems
 }

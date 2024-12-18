@@ -34,3 +34,94 @@ Moriya_1 = {
         death = yes
     }
 }
+
+107500 = {
+	name = "Sancho" # Sancho (II) Fernández 'el Fuerte', King of Castille (1065-1072), Galicia (1071-1072) & León (1072) & Count of Amaya, Burgos, Cuellar, Olemdo & Valladolid (1065-1072), Santiago & Tui (1071-1072), Ávila, Benavente & León (1072)
+	dna = 107500_king_sancho
+	dynasty = 442
+}
+
+194006 = {
+	name = Dengizikh
+	dynasty = 9570
+	religion = tengri_pagan
+	culture = avar
+	father = 146163
+	722.1.1 = {
+		birth = 722.1.1
+	}
+	776.1. = {
+		death = 776.1.1
+	}
+}
+
+107500 = {
+	name = "Sancho" # Sancho (II) Fernández 'el Fuerte', King of Castille (1065-1072), Galicia (1071-1072) & León (1072) & Count of Amaya, Burgos, Cuellar, Olemdo & Valladolid (1065-1072), Santiago & Tui (1071-1072), Ávila, Benavente & León (1072)
+	dna = 107500_king_sancho
+	dynasty = 442 # Jimena Dynasty
+	martial = 8
+	diplomacy = 7
+	intrigue = 3
+	stewardship = 6
+	religion = catholic
+	culture = castilian
+	trait = ambitious
+	trait = wrathful
+	trait = brave
+	trait = education_martial_3
+	sexuality = heterosexual
+ 
+	father = 107510 # King Fernando I of León
+	mother = 107511 # Queen Sancha Alfónsez (asturleonese.txt)
+ 
+	1039.1.1 = {
+		birth = yes
+		effect = {
+			add_character_flag = has_scripted_appearance
+		}
+	}
+	1065.12.17 = {
+		effect = {
+			set_relation_rival = { target = character:109500 reason = rival_historical } #Invaded his brother's land and forced him to flee
+			set_relation_rival = { target = character:108500 reason = rival_historical } #Attacked his brother
+			set_relation_friend = { reason = friend_generic_history target = character:107590 } #"El Cid", served Sancho II as a commander
+			give_nickname = "nick_the_strong"
+		}
+	}
+	1065.12.17 = {
+		add_pressed_claim = title:k_navarra
+		add_pressed_claim = title:c_navarra
+		add_pressed_claim = title:k_spanish_galicia
+		add_pressed_claim = title:c_santiago
+		add_pressed_claim = title:c_tui
+		add_pressed_claim = title:k_leon
+		add_pressed_claim = title:c_avila
+		add_pressed_claim = title:c_benavente
+		add_pressed_claim = title:c_leon
+		add_pressed_claim = title:c_zamora
+	}
+	1069.5.26 = {
+		add_spouse = 71367 # Audebert (occitan.txt)
+	}
+	1070.1.1 = {
+		remove_claim = title:k_navarra
+		remove_claim = title:c_navarra
+	}
+	1071.2.1 = {
+		remove_claim = title:k_spanish_galicia
+		remove_claim = title:c_santiago
+		remove_claim = title:c_tui
+	}
+	1072.1.12 = {
+		remove_claim = title:k_leon
+		remove_claim = title:c_avila
+		remove_claim = title:c_benavente
+		remove_claim = title:c_leon
+	}
+	1072.10.7 = {
+		death = {
+			death_reason = death_murder_known
+			killer = 9051 # Vellido Dolfos
+		}
+	}
+}

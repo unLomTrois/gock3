@@ -8,29 +8,28 @@ import (
 	"github.com/unLomTrois/gock3/internal/app/files"
 )
 
-type Common struct {
-	Traits *Traits
+type History struct {
+	Characters *HistoryCharacters
 }
 
-func NewCommon() *Common {
-	return &Common{
-		Traits: NewTraits(),
+func NewHistory() *History {
+	return &History{
+		Characters: NewHistoryCharacters(),
 	}
 }
 
 // Folder returns the folder path for common, using the correct
 // path separator for the operating system.
-// On Windows, it returns "game\\common", and on Linux, "game/common".
-func (c *Common) Folder() string {
-	return filepath.Join("game", "common")
+func (c *History) Folder() string {
+	return filepath.Join("game", "history")
 }
 
-func (common *Common) Load(fset *files.FileSet) {
+func (history *History) Load(fset *files.FileSet) {
 	var files []*files.FileEntry
 
 	for _, fileEntry := range fset.Files {
 		fullpath := fileEntry.FullPath()
-		if strings.Contains(fullpath, common.Folder()) {
+		if strings.Contains(fullpath, history.Folder()) {
 			files = append(files, fileEntry)
 		}
 
@@ -39,7 +38,6 @@ func (common *Common) Load(fset *files.FileSet) {
 		}
 	}
 
-	log.Printf("Found %d common files", len(files))
-
-	common.Traits.Load(files)
+	log.Printf("Found %d history files", len(files))
+	history.Characters.Load(files)
 }

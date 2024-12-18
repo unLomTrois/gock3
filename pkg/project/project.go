@@ -20,6 +20,7 @@ type Project struct {
 	ModFileDescriptor string
 	Diagnostics       []*report.DiagnosticItem
 	Common            *data.Common
+	History           *data.History
 }
 
 func NewProject(vanillaDir string, modFileDescriptor string) (*Project, error) {
@@ -37,6 +38,7 @@ func NewProject(vanillaDir string, modFileDescriptor string) (*Project, error) {
 		ModFileDescriptor: modFileDescriptor,
 		Diagnostics:       []*report.DiagnosticItem{},
 		Common:            data.NewCommon(),
+		History:           data.NewHistory(),
 	}, nil
 }
 
@@ -53,9 +55,13 @@ func (project *Project) Load() {
 	modLoader := files.NewModLoader(mod.Path.Value, replacePaths)
 	fset := files.NewFileSet(project.VanillaDir, modLoader)
 
-	fset.Scan(project.VanillaDir)
+	err := fset.Scan(project.VanillaDir)
+	if err != nil {
+		panic(err)
+	}
 
 	project.Common.Load(fset)
+	project.History.Load(fset)
 
 	project.Validate()
 }

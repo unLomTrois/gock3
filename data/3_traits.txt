@@ -6,6 +6,38 @@
 @neg_compat_medium = -15
 @neg_compat_low = -5
 
+despoiler_of_byzantium = {
+	category = fame
+	shown_in_ruler_designer = no
+	
+	martial = 1
+	prowess = 2
+
+	dread_baseline_add = 10
+	siege_phase_time = -0.25
+	men_at_arms_maintenance_per_dread_mult = -0.0025
+	knight_effectiveness_per_dread = 0.002
+	greek_opinion = -50
+	county_opinion_add = -10
+	clergy_opinion = -15
+
+	culture_modifier = {
+		parameter = faith_warrior_traits_more_valued
+		monthly_prestige = 1
+	}
+	
+	icon = despoiler_of_byzantium.dds
+
+	name =  trait_despoiler_of_byzantium
+
+	desc = trait_despoiler_of_byzantium_desc
+	
+	ai_compassion = -10
+	ai_greed = 10
+	ai_honor = -10
+}
+
+
 # INTRIGUE OUTCOMES
 education_intrigue_1 = {
 	color = { 255 100 0 }

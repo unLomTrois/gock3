@@ -45,6 +45,12 @@ func (p *Parser) FieldList(stopLookahead ...tokens.TokenType) []*ast.Field {
 			// Handle unexpected token
 			errMsg := fmt.Sprintf(errFieldListUnexpectedToken, p.currentToken.Value, p.currentToken.Type)
 			err := report.FromToken(p.currentToken, severity.Error, errMsg)
+
+			path, e := p.currentToken.Loc.Fullpath()
+			if e != nil {
+				return nil
+			}
+			panic(path)
 			p.AddError(err)
 			if _, recovered := p.synchronize(FieldListRecovery); !recovered {
 				return fields // Stop parsing if recovery fails
@@ -162,7 +168,7 @@ func (p *Parser) Value() ast.BV {
 	case tokens.NEXTLINE:
 		p.Expect(tokens.NEXTLINE)
 		return p.EmptyValue()
-	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL:
+	case tokens.WORD, tokens.NUMBER, tokens.QUOTED_STRING, tokens.BOOL, tokens.DATE:
 		return p.Literal()
 	case tokens.START:
 		return p.Block()
@@ -191,7 +197,7 @@ func (p *Parser) Literal() *tokens.Token {
 	}
 
 	switch p.currentToken.Type {
-	case tokens.WORD, tokens.NUMBER, tokens.BOOL:
+	case tokens.WORD, tokens.NUMBER, tokens.BOOL, tokens.DATE:
 		if token := p.Expect(p.currentToken.Type); token != nil {
 			return token
 		}
