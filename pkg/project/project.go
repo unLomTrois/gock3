@@ -58,10 +58,12 @@ func (project *Project) Load() {
 	modLoader := files.NewModLoader(mod.Path.Value, replacePaths)
 	fset := files.NewFileSet(project.VanillaDir, modLoader)
 
-	err := fset.Scan(project.VanillaDir)
+	fil, err := files.Scan(project.VanillaDir, modLoader.Root, replacePaths)
 	if err != nil {
 		panic(err)
 	}
+
+	fset.Files = fil
 
 	commonEntities := project.Common.Load(fset)
 	project.SymbolTable.AddEntities(commonEntities)

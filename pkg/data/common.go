@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -47,7 +46,7 @@ func (common *Common) Load(fset *files.FileSet) []Entity {
 	traits := common.Traits.Load(files)
 
 	for _, trait := range traits {
-		fmt.Println(trait.Name(), trait.Location())
+		// fmt.Println(trait.Name(), trait.Location())
 		entities = append(entities, trait)
 	}
 

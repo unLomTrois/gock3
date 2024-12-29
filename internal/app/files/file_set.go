@@ -1,12 +1,5 @@
 package files
 
-import (
-	"io/fs"
-	"log"
-	"path/filepath"
-	"strings"
-)
-
 type FileSet struct {
 	// path to ck3/game
 	VanillaRoot string
@@ -33,74 +26,3 @@ func NewModLoader(modRoot string, replacePaths []string) *ModLoader {
 		ReplacePaths: replacePaths,
 	}
 }
-
-func (fset *FileSet) Scan(path string) error {
-	log.Println("Scanning", path)
-
-	cleanReplacePaths := make([]string, 0, len(fset.ModLoader.ReplacePaths))
-	for _, replacePath := range fset.ModLoader.ReplacePaths {
-		cleanReplacePaths = append(cleanReplacePaths, filepath.Clean(replacePath))
-	}
-
-	err := filepath.WalkDir(path, func(subpath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			for _, replacePath := range cleanReplacePaths {
-				if strings.Contains(subpath, replacePath) {
-					return filepath.SkipDir
-				}
-			}
-
-			return nil
-		}
-
-		if !(strings.HasSuffix(subpath, ".txt")) {
-			return nil
-		}
-
-		fileEntry := NewFileEntry(subpath, Vanilla)
-
-		fset.Files = append(fset.Files, fileEntry)
-
-		return nil
-	})
-
-	log.Println("Found", len(fset.Files), "files")
-
-	log.Println(fset.ModLoader.Root)
-
-	filepath.WalkDir(fset.ModLoader.Root, func(subpath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// if d.IsDir() {
-		// 	for _, replacePath := range cleanReplacePaths {
-		// 		if strings.Contains(subpath, replacePath) {
-		// 			return filepath.SkipDir
-		// 		}
-		// 	}
-
-		// 	return nil
-		// }
-
-		if !(strings.HasSuffix(subpath, ".txt")) {
-			return nil
-		}
-
-		fileEntry := NewFileEntry(subpath, Mod)
-
-		fset.Files = append(fset.Files, fileEntry)
-
-		return nil
-	})
-
-	log.Println("Found", len(fset.Files), "files")
-
-	return err
-}
-
-// TODO: add paths from mod
