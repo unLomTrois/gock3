@@ -4,6 +4,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
+	"github.com/unLomTrois/gock3/pkg/entity"
 	"github.com/unLomTrois/gock3/pkg/report"
 	"github.com/unLomTrois/gock3/pkg/validator"
 )
@@ -36,8 +37,8 @@ func (trait *Trait) Location() string {
 	return fullpath
 }
 
-func (trait *Trait) GetKind() string {
-	return "trait"
+func (trait *Trait) GetKind() entity.EntityKind {
+	return entity.KindTrait
 }
 
 var categorySet = mapset.NewSet("personality", "education", "childhood", "commander", "winter_commander", "lifestyle", "court_type", "fame", "health")

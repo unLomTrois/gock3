@@ -1,7 +1,7 @@
-package data
+package entity
 
 type Entity interface {
 	Name() string
 	Location() string
-	GetKind() string
+	GetKind() EntityKind
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
+	"github.com/unLomTrois/gock3/pkg/entity"
 )
 
 type History struct {
@@ -24,7 +25,7 @@ func (c *History) Folder() string {
 	return filepath.Join("game", "history")
 }
 
-func (history *History) Load(fset *files.FileSet) []Entity {
+func (history *History) Load(fset *files.FileSet) []entity.Entity {
 	var files []*files.FileEntry
 
 	for _, fileEntry := range fset.Files {
@@ -38,7 +39,7 @@ func (history *History) Load(fset *files.FileSet) []Entity {
 		}
 	}
 
-	var entities []Entity
+	var entities []entity.Entity
 
 	log.Printf("Found %d history files", len(files))
 	characters := history.Characters.Load(files)

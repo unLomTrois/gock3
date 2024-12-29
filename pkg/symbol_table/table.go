@@ -1,44 +1,43 @@
 package symboltable
 
-import "github.com/unLomTrois/gock3/pkg/data"
+import (
+	"github.com/unLomTrois/gock3/pkg/entity"
+)
 
 type SymbolTableInterface interface {
-	AddEntity(entity data.Entity)
-	AddEntities(entities []data.Entity)
-	Get(name string) data.Entity
+	AddEntity(entity entity.Entity)
+	AddEntities(entities []entity.Entity)
+	Get(name string) entity.Entity
 	Contains(name string) bool
 }
-
-type EntityKind = string
-
 type SymbolTable struct {
-	store map[EntityKind]map[string]data.Entity
+	store map[entity.EntityKind]map[string]entity.Entity
 }
 
 func NewSymbolTable() *SymbolTable {
 	return &SymbolTable{
-		store: make(map[EntityKind]map[string]data.Entity),
+		store: make(map[entity.EntityKind]map[string]entity.Entity),
 	}
 }
 
-func (st *SymbolTable) AddEntity(entity data.Entity) {
-	kind := entity.GetKind()
+func (st *SymbolTable) AddEntity(item entity.Entity) {
+	kind := item.GetKind()
 
 	if _, exists := st.store[kind]; !exists {
-		st.store[kind] = make(map[string]data.Entity)
+		st.store[kind] = make(map[string]entity.Entity)
 	}
 
-	name := entity.Name()
-	st.store[kind][name] = entity
+	name := item.Name()
+	st.store[kind][name] = item
 }
 
-func (st *SymbolTable) AddEntities(entities []data.Entity) {
+func (st *SymbolTable) AddEntities(entities []entity.Entity) {
 	for _, entity := range entities {
 		st.AddEntity(entity)
 	}
 }
 
-func (st *SymbolTable) Get(kind EntityKind, name string) (data.Entity, bool) {
+func (st *SymbolTable) Get(kind entity.EntityKind, name string) (entity.Entity, bool) {
 	if entities, ok := st.store[kind]; ok {
 		e, found := entities[name]
 		return e, found
@@ -46,7 +45,7 @@ func (st *SymbolTable) Get(kind EntityKind, name string) (data.Entity, bool) {
 	return nil, false
 }
 
-func (st *SymbolTable) Contains(kind EntityKind, name string) bool {
+func (st *SymbolTable) Contains(kind entity.EntityKind, name string) bool {
 	if entities, ok := st.store[kind]; ok {
 		_, found := entities[name]
 		return found

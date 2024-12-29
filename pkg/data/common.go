@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
+	"github.com/unLomTrois/gock3/pkg/entity"
 )
 
 type Common struct {
@@ -25,7 +26,7 @@ func (c *Common) Folder() string {
 	return filepath.Join("game", "common")
 }
 
-func (common *Common) Load(fset *files.FileSet) []Entity {
+func (common *Common) Load(fset *files.FileSet) []entity.Entity {
 	var files []*files.FileEntry
 
 	for _, fileEntry := range fset.Files {
@@ -41,7 +42,7 @@ func (common *Common) Load(fset *files.FileSet) []Entity {
 
 	log.Printf("Found %d files in common", len(files))
 
-	var entities []Entity
+	var entities []entity.Entity
 
 	traits := common.Traits.Load(files)
 

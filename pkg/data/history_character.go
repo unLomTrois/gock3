@@ -5,6 +5,7 @@ import (
 
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
+	"github.com/unLomTrois/gock3/pkg/entity"
 	"github.com/unLomTrois/gock3/pkg/report"
 	"github.com/unLomTrois/gock3/pkg/validator"
 )
@@ -37,8 +38,8 @@ func (character *HistoryCharacter) Location() string {
 	return fullpath
 }
 
-func (character *HistoryCharacter) GetKind() string {
-	return "character"
+func (character *HistoryCharacter) GetKind() entity.EntityKind {
+	return entity.KindCharacter
 }
 
 // var categorySet = mapset.NewSet("personality", "education", "childhood", "commander", "winter_commander", "lifestyle", "court_type", "fame", "health")
