@@ -36,6 +36,10 @@ func (trait *Trait) Location() string {
 	return fullpath
 }
 
+func (trait *Trait) GetKind() string {
+	return "trait"
+}
+
 var categorySet = mapset.NewSet("personality", "education", "childhood", "commander", "winter_commander", "lifestyle", "court_type", "fame", "health")
 
 func (trait *Trait) Validate() []*report.DiagnosticItem {

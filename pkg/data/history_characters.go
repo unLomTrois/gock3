@@ -37,7 +37,7 @@ func (hc *HistoryCharacters) Load(fileEntries []*files.FileEntry) []*HistoryChar
 	var problems []*report.DiagnosticItem
 
 	for _, file := range files {
-		ast := hc.loadFile(file)
+		ast := hc.parseFile(file)
 		if ast == nil {
 			continue
 		}
@@ -63,7 +63,7 @@ func (hc *HistoryCharacters) filterFiles(fileEntries []*files.FileEntry) []*file
 	return traitFiles
 }
 
-func (hc *HistoryCharacters) loadFile(fileEntry *files.FileEntry) *ast.AST {
+func (hc *HistoryCharacters) parseFile(fileEntry *files.FileEntry) *ast.AST {
 	ast, err := pdxfile.ParseFile(fileEntry)
 	if err != nil {
 		log.Printf("Failed to parse file %s: %v", fileEntry.FullPath(), err)

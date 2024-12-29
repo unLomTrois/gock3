@@ -190,3 +190,8 @@ func (bv *BlockValidator) BanField(key string, because string) {
 		bv.AddError(err)
 	}
 }
+
+// Deprecated: Add more suitable way.
+func (bv *BlockValidator) Fields() map[string]*ast.Field {
+	return bv.fields
+}

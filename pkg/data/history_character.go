@@ -1,6 +1,8 @@
 package data
 
 import (
+	"log"
+
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/pkg/report"
@@ -35,10 +37,20 @@ func (character *HistoryCharacter) Location() string {
 	return fullpath
 }
 
+func (character *HistoryCharacter) GetKind() string {
+	return "character"
+}
+
 // var categorySet = mapset.NewSet("personality", "education", "childhood", "commander", "winter_commander", "lifestyle", "court_type", "fame", "health")
 
 func (character *HistoryCharacter) Validate() []*report.DiagnosticItem {
 	fields := validator.NewBlockValidator(character.block)
+
+	for key, field := range fields.Fields() {
+		if key == "trait" {
+			log.Println("trait", field.Value)
+		}
+	}
 
 	// for _, field := range trait.block.Values {
 	// 	ok := availableKeys.Contains(field.Key.Value)

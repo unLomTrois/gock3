@@ -9,38 +9,56 @@ type SymbolTableInterface interface {
 	Contains(name string) bool
 }
 
+type EntityKind = string
+
 type SymbolTable struct {
-	table map[string]data.Entity
+	store map[EntityKind]map[string]data.Entity
 }
 
 func NewSymbolTable() *SymbolTable {
 	return &SymbolTable{
-		table: make(map[string]data.Entity),
+		store: make(map[EntityKind]map[string]data.Entity),
 	}
 }
 
-func (s *SymbolTable) AddEntity(entity data.Entity) {
+func (st *SymbolTable) AddEntity(entity data.Entity) {
+	kind := entity.GetKind()
+
+	if _, exists := st.store[kind]; !exists {
+		st.store[kind] = make(map[string]data.Entity)
+	}
+
 	name := entity.Name()
-
-	s.table[name] = entity
+	st.store[kind][name] = entity
 }
 
-func (s *SymbolTable) AddEntities(entities []data.Entity) {
+func (st *SymbolTable) AddEntities(entities []data.Entity) {
 	for _, entity := range entities {
-		s.AddEntity(entity)
+		st.AddEntity(entity)
 	}
 }
 
-func (s *SymbolTable) Get(name string) data.Entity {
-	return s.table[name]
+func (st *SymbolTable) Get(kind EntityKind, name string) (data.Entity, bool) {
+	if entities, ok := st.store[kind]; ok {
+		e, found := entities[name]
+		return e, found
+	}
+	return nil, false
 }
 
-func (s *SymbolTable) Contains(name string) bool {
-	_, ok := s.table[name]
-
-	return ok
+func (st *SymbolTable) Contains(kind EntityKind, name string) bool {
+	if entities, ok := st.store[kind]; ok {
+		_, found := entities[name]
+		return found
+	}
+	return false
 }
 
 func (s *SymbolTable) Len() int {
-	return len(s.table)
+	// iterate
+	var count int
+	for _, entities := range s.store {
+		count += len(entities)
+	}
+	return count
 }
