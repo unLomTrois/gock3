@@ -38,6 +38,10 @@ func (c *ProjectCommand) Name() string {
 	return c.fs.Name()
 }
 
+func (c *ProjectCommand) Description() string {
+	return "Load the whole project and parses them to data structures"
+}
+
 // Run parses the input file and generates the output files
 // args is the list of command line arguments
 // The first argument is the file path

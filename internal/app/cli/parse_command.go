@@ -1,9 +1,10 @@
 package cli
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
+	"path/filepath"
 
 	"github.com/unLomTrois/gock3/internal/app/files"
 	"github.com/unLomTrois/gock3/internal/app/pdxfile"
@@ -11,16 +12,16 @@ import (
 )
 
 type ParseCommand struct {
-	fs          *flag.FlagSet
+	flagset     *flag.FlagSet
 	astFilepath string
 }
 
 func NewParseCommand() *ParseCommand {
 	command := &ParseCommand{
-		fs: flag.NewFlagSet("parse", flag.ExitOnError),
+		flagset: flag.NewFlagSet("parse", flag.ExitOnError),
 	}
 
-	command.fs.StringVar(
+	command.flagset.StringVar(
 		&command.astFilepath,
 		"save-ast",
 		"",
@@ -30,48 +31,63 @@ func NewParseCommand() *ParseCommand {
 	return command
 }
 
-func (c *ParseCommand) Name() string {
-	return c.fs.Name()
+func (command *ParseCommand) Name() string {
+	return command.flagset.Name()
+}
+
+func (command *ParseCommand) Description() string {
+	return "Parse a file and generate the output files"
 }
 
 // Run parses the input file and generates the output files
 // args is the list of command line arguments
 // The first argument is the file path
-func (c *ParseCommand) Run(args []string) error {
-	if err := c.fs.Parse(args[1:]); err != nil {
+func (command *ParseCommand) Run(args []string) error {
+	if err := command.validateArgs(args); err != nil {
 		return err
 	}
 
-	file_path := args[0]
-	fullpath, err := utils.FileExists(file_path)
+	if err := command.flagset.Parse(args[1:]); err != nil {
+		return err
+	}
+
+	filePath := args[0]
+	fullpath, err := utils.FileExists(filePath)
 	if err != nil {
 		return err
 	}
 
-	return c.parse(fullpath)
+	return command.parse(fullpath)
 }
 
-func (c *ParseCommand) parse(fullpath string) error {
-	file_entry := files.NewFileEntry(fullpath, files.FileKind(files.Mod))
+func (command *ParseCommand) validateArgs(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("not enough arguments")
+	}
+	return nil
+}
 
-	ast, err := pdxfile.ParseFile(file_entry)
+func (command *ParseCommand) parse(fullpath string) error {
+	fileEntry := files.NewFileEntry(fullpath, files.FileKind(files.Mod))
+
+	ast, err := pdxfile.ParseFile(fileEntry)
 	if err != nil {
 		return err
 	}
 
-	if c.astFilepath != "" {
-		if err := utils.SaveJSON(ast, c.astFilepath); err != nil {
-			return fmt.Errorf("saving parse tree: %w", err)
-		}
-		return err
+	if command.astFilepath == "" {
+		return nil
 	}
 
-	_, err = json.MarshalIndent(ast, "", "  ")
+	if err := utils.SaveJSON(ast, command.astFilepath); err != nil {
+		return fmt.Errorf("failed to save AST: %w", err)
+	}
+
+	absPath, err := filepath.Abs(command.astFilepath)
 	if err != nil {
 		return err
 	}
 
-	// log.Println(string(ast_string))
-
+	log.Println("Saved parse tree to", absPath)
 	return nil
 }

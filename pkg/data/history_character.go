@@ -1,8 +1,6 @@
 package data
 
 import (
-	"log"
-
 	"github.com/unLomTrois/gock3/internal/app/lexer/tokens"
 	"github.com/unLomTrois/gock3/internal/app/parser/ast"
 	"github.com/unLomTrois/gock3/pkg/entity"
@@ -47,11 +45,11 @@ func (character *HistoryCharacter) GetKind() entity.EntityKind {
 func (character *HistoryCharacter) Validate() []*report.DiagnosticItem {
 	fields := validator.NewBlockValidator(character.block)
 
-	for key, field := range fields.Fields() {
-		if key == "trait" {
-			log.Println("trait", field.Value)
-		}
-	}
+	// for key, field := range fields.Fields() {
+	// 	if key == "trait" {
+	// 		log.Println("trait", field.Value)
+	// 	}
+	// }
 
 	// for _, field := range trait.block.Values {
 	// 	ok := availableKeys.Contains(field.Key.Value)
