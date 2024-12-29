@@ -7,75 +7,68 @@ import (
 	"strings"
 )
 
-// этот модуль будет сканировать все файлы в двух директориях, в директории игры и директории мода (включая вложенные файлы в другие директории)
-// если возникает колизия названий файлов, приоритет будет у мода, записан будет только один файл
-// также, будет аргумент замены путей, который будет давать приоритет моду над целой субдиректорией
+// Scan scans two directories (the game folder and the mod folder) to find .txt files,
+// including those in subdirectories. If there is a filename collision, the file in the mod folder
+// takes precedence. A list of paths (replacePaths) can be provided so that any matching
+// subdirectory under the game folder will be skipped, effectively giving priority to the mod folder
+// for that subdirectory.
 func Scan(gameFolder string, modFolder string, replacePaths []string) ([]*FileEntry, error) {
-	log.Println("Scanning game folder", gameFolder)
-
-	cleanReplacePaths := make([]string, 0, len(replacePaths))
-	for _, rp := range replacePaths {
-		cleanReplacePaths = append(cleanReplacePaths, filepath.Clean(rp))
+	// Normalize replacePaths to clean directory paths
+	normalizedReplacePaths := make([]string, 0, len(replacePaths))
+	for _, path := range replacePaths {
+		normalizedReplacePaths = append(normalizedReplacePaths, filepath.Clean(path))
 	}
 
-	var fileMap = make(map[string]*FileEntry)
+	// A map to hold files uniquely by their filename
+	fileMap := make(map[string]*FileEntry)
 
-	err := filepath.WalkDir(gameFolder, func(subpath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			for _, replacePath := range cleanReplacePaths {
-				if strings.Contains(subpath, replacePath) {
-					return filepath.SkipDir
-				}
+	// Helper function to handle skipping directories and adding files
+	scanFunc := func(root string, kind FileKind) fs.WalkDirFunc {
+		return func(subpath string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
 			}
 
+			// Skip entire directories if they match any replacePath
+			if d.IsDir() && kind == Vanilla {
+				for _, replacePath := range normalizedReplacePaths {
+					if strings.Contains(subpath, replacePath) {
+						return filepath.SkipDir
+					}
+				}
+				return nil
+			}
+
+			// Only consider .txt files
+			if !strings.HasSuffix(subpath, ".txt") {
+				return nil
+			}
+
+			filename := filepath.Base(subpath)
+			fileEntry := NewFileEntry(subpath, kind)
+			fileMap[filename] = fileEntry
+
 			return nil
 		}
+	}
 
-		if !(strings.HasSuffix(subpath, ".txt")) {
-			return nil
-		}
-
-		fileName := filepath.Base(subpath)
-		fileEntry := NewFileEntry(subpath, FileKind(Vanilla))
-		fileMap[fileName] = fileEntry
-
-		return nil
-	})
+	log.Printf("Scanning game folder: %s\n", gameFolder)
+	err := filepath.WalkDir(gameFolder, scanFunc(gameFolder, Vanilla))
 	if err != nil {
 		return nil, err
 	}
 
-	log.Println("Scanning mod folder", modFolder)
-	err = filepath.WalkDir(modFolder, func(subpath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !(strings.HasSuffix(subpath, ".txt")) {
-			return nil
-		}
-
-		fileName := filepath.Base(subpath)
-		fileEntry := NewFileEntry(subpath, FileKind(Mod))
-		fileMap[fileName] = fileEntry
-
-		return nil
-	})
-	if err != nil {
+	log.Printf("Scanning mod folder: %s\n", modFolder)
+	if err := filepath.WalkDir(modFolder, scanFunc(modFolder, Mod)); err != nil {
 		return nil, err
 	}
 
+	// Collect file entries from the map
 	var fileEntries []*FileEntry
-
-	for _, fileEntry := range fileMap {
-		fileEntries = append(fileEntries, fileEntry)
+	for _, entry := range fileMap {
+		fileEntries = append(fileEntries, entry)
 	}
 
-	log.Println("Found", len(fileEntries), "files")
-
-	return fileEntries, err
+	log.Printf("Found %d files\n", len(fileEntries))
+	return fileEntries, nil
 }
