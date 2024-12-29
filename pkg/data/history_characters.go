@@ -29,7 +29,7 @@ func (t *HistoryCharacters) Folder() string {
 	return filepath.Join("history", "characters")
 }
 
-func (hc *HistoryCharacters) Load(fileEntries []*files.FileEntry) {
+func (hc *HistoryCharacters) Load(fileEntries []*files.FileEntry) []*HistoryCharacter {
 	files := hc.filterFiles(fileEntries)
 
 	log.Printf("Found %d character files", len(files))
@@ -49,6 +49,8 @@ func (hc *HistoryCharacters) Load(fileEntries []*files.FileEntry) {
 
 	log.Printf("Found %d characters", len(hc.Characters))
 	log.Printf("%d problems", len(problems))
+
+	return hc.Characters
 }
 
 func (hc *HistoryCharacters) filterFiles(fileEntries []*files.FileEntry) []*files.FileEntry {

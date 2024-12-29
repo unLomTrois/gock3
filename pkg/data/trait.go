@@ -22,6 +22,20 @@ func NewTraitFromAST(key *tokens.Token, block *ast.FieldBlock) *Trait {
 	}
 }
 
+func (trait *Trait) Name() string {
+	return trait.name
+}
+
+func (trait *Trait) Location() string {
+	fullpath, err := trait.key.Loc.Fullpath()
+
+	if err != nil {
+		return ""
+	}
+
+	return fullpath
+}
+
 var categorySet = mapset.NewSet("personality", "education", "childhood", "commander", "winter_commander", "lifestyle", "court_type", "fame", "health")
 
 func (trait *Trait) Validate() []*report.DiagnosticItem {

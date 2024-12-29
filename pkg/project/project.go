@@ -13,6 +13,7 @@ import (
 	"github.com/unLomTrois/gock3/pkg/data"
 	"github.com/unLomTrois/gock3/pkg/report"
 	"github.com/unLomTrois/gock3/pkg/report/severity"
+	symboltable "github.com/unLomTrois/gock3/pkg/symbol_table"
 )
 
 type Project struct {
@@ -21,6 +22,7 @@ type Project struct {
 	Diagnostics       []*report.DiagnosticItem
 	Common            *data.Common
 	History           *data.History
+	SymbolTable       *symboltable.SymbolTable
 }
 
 func NewProject(vanillaDir string, modFileDescriptor string) (*Project, error) {
@@ -39,6 +41,7 @@ func NewProject(vanillaDir string, modFileDescriptor string) (*Project, error) {
 		Diagnostics:       []*report.DiagnosticItem{},
 		Common:            data.NewCommon(),
 		History:           data.NewHistory(),
+		SymbolTable:       symboltable.NewSymbolTable(),
 	}, nil
 }
 
@@ -60,8 +63,13 @@ func (project *Project) Load() {
 		panic(err)
 	}
 
-	project.Common.Load(fset)
-	project.History.Load(fset)
+	commonEntities := project.Common.Load(fset)
+	project.SymbolTable.AddEntities(commonEntities)
+	log.Println("symbol table items: ", project.SymbolTable.Len())
+
+	historyEntities := project.History.Load(fset)
+	project.SymbolTable.AddEntities(historyEntities)
+	log.Println("symbol table items: ", project.SymbolTable.Len())
 
 	project.Validate()
 }

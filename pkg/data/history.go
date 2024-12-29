@@ -24,7 +24,7 @@ func (c *History) Folder() string {
 	return filepath.Join("game", "history")
 }
 
-func (history *History) Load(fset *files.FileSet) {
+func (history *History) Load(fset *files.FileSet) []Entity {
 	var files []*files.FileEntry
 
 	for _, fileEntry := range fset.Files {
@@ -38,6 +38,14 @@ func (history *History) Load(fset *files.FileSet) {
 		}
 	}
 
+	var entities []Entity
+
 	log.Printf("Found %d history files", len(files))
-	history.Characters.Load(files)
+	characters := history.Characters.Load(files)
+
+	for _, character := range characters {
+		entities = append(entities, character)
+	}
+
+	return entities
 }

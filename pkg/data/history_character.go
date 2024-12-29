@@ -21,6 +21,20 @@ func NewHistoryCharacter(key *tokens.Token, block *ast.FieldBlock) *HistoryChara
 	}
 }
 
+func (character *HistoryCharacter) Name() string {
+	return character.name
+}
+
+func (character *HistoryCharacter) Location() string {
+	fullpath, err := character.key.Loc.Fullpath()
+
+	if err != nil {
+		return ""
+	}
+
+	return fullpath
+}
+
 // var categorySet = mapset.NewSet("personality", "education", "childhood", "commander", "winter_commander", "lifestyle", "court_type", "fame", "health")
 
 func (character *HistoryCharacter) Validate() []*report.DiagnosticItem {

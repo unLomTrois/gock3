@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -25,7 +26,7 @@ func (c *Common) Folder() string {
 	return filepath.Join("game", "common")
 }
 
-func (common *Common) Load(fset *files.FileSet) {
+func (common *Common) Load(fset *files.FileSet) []Entity {
 	var files []*files.FileEntry
 
 	for _, fileEntry := range fset.Files {
@@ -39,7 +40,16 @@ func (common *Common) Load(fset *files.FileSet) {
 		}
 	}
 
-	log.Printf("Found %d common files", len(files))
+	log.Printf("Found %d files in common", len(files))
 
-	common.Traits.Load(files)
+	var entities []Entity
+
+	traits := common.Traits.Load(files)
+
+	for _, trait := range traits {
+		fmt.Println(trait.Name(), trait.Location())
+		entities = append(entities, trait)
+	}
+
+	return entities
 }

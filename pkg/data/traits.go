@@ -29,7 +29,7 @@ func (t *Traits) Folder() string {
 	return filepath.Join("common", "traits")
 }
 
-func (traits *Traits) Load(fileEntries []*files.FileEntry) {
+func (traits *Traits) Load(fileEntries []*files.FileEntry) []*Trait {
 	traitFiles := traits.filterTraitFiles(fileEntries)
 
 	log.Printf("Found %d trait files", len(traitFiles))
@@ -37,7 +37,7 @@ func (traits *Traits) Load(fileEntries []*files.FileEntry) {
 	var problems []*report.DiagnosticItem
 
 	for _, file := range traitFiles {
-		ast := traits.loadFile(file)
+		ast := traits.parseFile(file)
 		if ast == nil {
 			continue
 		}
@@ -49,6 +49,8 @@ func (traits *Traits) Load(fileEntries []*files.FileEntry) {
 
 	log.Printf("Found %d traits", len(traits.Traits))
 	log.Printf("%d problems", len(problems))
+
+	return traits.Traits
 }
 
 func (traits *Traits) filterTraitFiles(fileEntries []*files.FileEntry) []*files.FileEntry {
@@ -61,7 +63,7 @@ func (traits *Traits) filterTraitFiles(fileEntries []*files.FileEntry) []*files.
 	return traitFiles
 }
 
-func (traits *Traits) loadFile(fileEntry *files.FileEntry) *ast.AST {
+func (traits *Traits) parseFile(fileEntry *files.FileEntry) *ast.AST {
 	ast, err := pdxfile.ParseFile(fileEntry)
 	if err != nil {
 		log.Printf("Failed to parse file %s: %v", fileEntry.FullPath(), err)
