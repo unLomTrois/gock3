@@ -26,7 +26,7 @@ func ParseFile(entry *files.FileEntry) (*ast.AST, error) {
 
 	token_stream, lexer_errs := lexer.Scan(entry, content)
 
-	utils.SaveJSON(token_stream, "tokenstream.json")
+	// utils.SaveJSON(token_stream, "tokenstream.json")
 
 	errs = append(errs, lexer_errs...)
 
